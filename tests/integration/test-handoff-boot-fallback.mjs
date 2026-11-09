@@ -1,6 +1,7 @@
 /**
  * 中文固定监听启动回退验收：旧的非交接候选无法通过工作进程身份检查时，保留公开监听并启动固定监听回退包。
  * 使用独立数据和端口，不访问正式服务或真实供应商。
+ * 整场景预留 120 秒复制和校验依赖，避免云端磁盘速度影响回退行为验收。
  */
 import assert from "node:assert/strict";
 import { copyFile, cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -52,7 +53,8 @@ test("固定监听候选启动失败时清理进程并启动回退包", { timeou
   assert.equal(supervisor.listener.target().id, fallbackId);
 });
 
-test("候选预热成功但激活失败时清理候选，回退仍保留历史数据", { timeout: 30000 }, async (t) => {
+test("候选预热成功但激活失败时清理候选，回退仍保留历史数据", { timeout: 120_000 }, async (t) => {
+  const setupStartedAt = Date.now();
   const root = await mkdtemp(path.join(os.tmpdir(), "lite-handoff-activation-"));
   let supervisor; t.after(async () => { await supervisor?.close(); await rm(root, { recursive: true, force: true }); });
   const sourceRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../..");
@@ -64,6 +66,7 @@ test("候选预热成功但激活失败时清理候选，回退仍保留历史�
   await writeFile(path.join(fixture, "server.js"), server.replace(signature, `${signature}\n  throw new Error("测试注入：候选激活失败");`));
   const candidate = path.join(root, "bad"); const fallback = path.join(root, "fallback");
   await createReleaseSnapshot(fixture, candidate, "activation-bad"); await createReleaseSnapshot(sourceRoot, fallback, "activation-good");
+  t.diagnostic(JSON.stringify({ snapshotSetupMs: Date.now() - setupStartedAt }));
   const data = path.join(root, "data"); await mkdir(data);
   const guard = createServer(); await new Promise((resolve) => guard.listen(0, "127.0.0.1", resolve)); const publicPort = guard.address().port; await new Promise((resolve) => guard.close(resolve)); assert.ok(publicPort >= 15725);
   await writeFile(path.join(data, "config.json"), JSON.stringify({ version: 2, providers: [],

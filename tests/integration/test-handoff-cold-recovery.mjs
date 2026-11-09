@@ -1,6 +1,7 @@
 /**
  * 中文观察期后恢复验收：旧进程退役后仍保留版本包，可手动回退并在当前进程崩溃时重新接管。
  * 只使用测试自有进程、数据和本机假上游，不访问正式服务或真实供应商。
+ * 整场景为依赖复制和校验预留 120 秒；业务恢复仍单独要求在 10 秒内完成。
  */
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
@@ -23,11 +24,13 @@ async function until(check) {
   throw new Error("等待观察期后回退超时");
 }
 
-test("旧进程退役后仍可手动回退，崩溃时重新启动回退包并接管队列", { timeout: 30000 }, async (t) => {
+test("旧进程退役后仍可手动回退，崩溃时重新启动回退包并接管队列", { timeout: 120_000 }, async (t) => {
+  const setupStartedAt = Date.now();
   const root = await mkdtemp(path.join(os.tmpdir(), "lite-handoff-cold-")); const data = path.join(root, "data"); await mkdir(data);
   const candidate = path.join(root, "candidate"); const fallback = path.join(root, "fallback");
   await createReleaseSnapshot(ROOT, candidate, "cold-a"); await createReleaseSnapshot(ROOT, fallback, "cold-b");
   const next = path.join(root, "next"); await createReleaseSnapshot(ROOT, next, "cold-c");
+  t.diagnostic(JSON.stringify({ snapshotSetupMs: Date.now() - setupStartedAt }));
   let calls = 0; const upstream = createServer(async (req, res) => { for await (const chunk of req) { void chunk; } calls += 1; res.writeHead(200, { "content-type": "application/json" }); res.end('{"status":"completed","usage":{"input_tokens":1,"output_tokens":1}}'); });
   const upstreamPort = await listen(upstream); const publicPort = await reserve(); const qualityPort = await reserve();
   await writeFile(path.join(data, "config.json"), JSON.stringify({ version: 2, proxy: { autoFailoverEnabled: false },
@@ -60,12 +63,14 @@ test("旧进程退役后仍可手动回退，崩溃时重新启动回退包并�
   t.diagnostic(JSON.stringify({ upstreamCalls: calls, usageRecords: records.length, coldManualRollback: true, coldCrashRecovery: true, elapsedMs }));
 });
 
-test("回退进程尚未稳定就再次崩溃时停止自动重试，公开端口报告受控故障", { timeout: 20000 }, async (t) => {
+test("回退进程尚未稳定就再次崩溃时停止自动重试，公开端口报告受控故障", { timeout: 120_000 }, async (t) => {
+  const setupStartedAt = Date.now();
   const root = await mkdtemp(path.join(os.tmpdir(), "lite-handoff-recovery-limit-")); let supervisor;
   t.after(async () => { await supervisor?.close(); await rm(root, { recursive: true, force: true }); });
   const data = path.join(root, "data"); await mkdir(data);
   const candidate = path.join(root, "candidate"); const fallback = path.join(root, "fallback");
   await createReleaseSnapshot(ROOT, candidate, "limit-a"); await createReleaseSnapshot(ROOT, fallback, "limit-b"); const publicPort = await reserve();
+  t.diagnostic(JSON.stringify({ snapshotSetupMs: Date.now() - setupStartedAt }));
   await writeFile(path.join(data, "config.json"), JSON.stringify({ version: 2, providers: [], groups: [{ id: "default", routingVersion: 1, name: "默认", listener: { host: "127.0.0.1", port: publicPort, enabled: true }, providerRefs: [] }], connectivityTest: { periodicIntervalMs: null } }));
   await writeFile(path.join(data, "usage.jsonl"), "");
   const events = []; supervisor = await createHandoffSupervisor({ candidate, fallback, dataDir: data, publicPort, observeMs: 30000, healthPolicy: { intervalMs: 30 }, log: (line) => events.push(line) });
