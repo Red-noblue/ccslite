@@ -4,11 +4,13 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-22%20%7C%2024-43853d.svg)](#环境要求)
 
-**本地 AI API 网关：供应商自动切换、token 用量统计与按请求边界在线升级。**
+**面向 Codex 与 Claude Code 的本地 AI API 网关：SSE 输出前故障转移、用量统计与会话级在线升级。**
 
-Local AI API gateway for Codex and Claude Code workflows: multi-provider routing, automatic failover, SSE streaming, token usage dashboard, and graceful upgrades.
+Local AI API gateway for Codex and Claude Code: multi-provider routing, pre-output SSE failover, usage analytics, and session-aware upgrades.
 
 将多个兼容上游收敛为一个本地入口，为 Codex、Claude Code、CC Switch 等客户端统一管理供应商优先级、故障回退和业务用量。支持代理 OpenAI Responses、Chat Completions 和 Anthropic Messages 入口；具体协议和模型能力由上游提供。
+
+CCS Lite 是可独立运行的本地 API 网关，也可以与 CC Switch 配合：继续用 CC Switch 管理客户端配置，让请求经过 CCS Lite，再由它按运行状态选择上游供应商。
 
 [快速开始](#快速开始) · [界面预览](#界面预览) · [在线升级与回退](#固定监听前置器) · [English overview](#english-overview) · [问题反馈](https://github.com/Red-noblue/ccslite/issues)
 
@@ -40,6 +42,27 @@ flowchart LR
 - 记录业务与 CCOK 探测用量，供应商卡片显示客户端时区下的今日业务用量，统计页保留完整历史汇总。
 - 提供价格实验、人民币与美元计价以及汇率系数缓存。
 - 固定监听前置器支持逐会话交接、整体交接和固定版本回退；配置、用量、诊断经前置器协调写入。
+
+## 与 CC Switch 的关系
+
+[CC Switch](https://github.com/farion1231/cc-switch) 本身也提供本地路由和自动故障转移，并覆盖多种 AI 客户端的配置管理，以及 MCP、Skills、提示词等工具生态。两者在供应商路由上有功能交集；CCS Lite 不把“能自动切换供应商”说成独有能力。
+
+| 关注点 | CC Switch | CCS Lite |
+| --- | --- | --- |
+| 主要定位 | 桌面端管理多个 AI 工具的供应商、配置与扩展 | 可独立部署的本地 API 网关和运行时管理台 |
+| 本地路由 | 按工具配置路由和故障转移队列，并支持若干 API 格式转换 | 按供应商优先级与分组路由，跟踪请求、供应商健康和恢复迁移 |
+| SSE 故障边界 | 官方文档介绍请求失败后的队列故障转移；本文不推断其未承诺的 SSE 细节 | 对响应提交给客户端之前的 SSE 前导阶段进行检查；可重试失败时尝试下一家，并将输出前故障转移与输出后断流分别统计 |
+| 服务更新 | 管理受支持客户端应用的安装与版本 | 固定端口前置器支持工作进程按会话交接、活动 SSE 排空和指定版本回退 |
+
+它们可以配合使用：CC Switch 继续管理客户端，CCS Lite 负责其后方的供应商 API 入口。若只需要管理大量客户端配置、插件和扩展，CC Switch 的覆盖范围更合适；若需要一个独立运行、可观测并可逐步升级的本地网关，CCS Lite 的重点更贴近这个需求。
+
+## SSE 与升级的可靠性边界
+
+CCS Lite 会在开始向客户端提交响应前检查 SSE 首包和事件前导。若上游在这个安全窗口内断连、超时或返回可重试错误，且下一家供应商可用，请求可以转到下一家；例如集成测试覆盖了首家已发送 `response.created`、`response.in_progress` 后断流，备用供应商成功返回完整 `response.completed` 的情况。切换成功时，客户端收到备用供应商的完整响应，不会收到首家尚未提交的失败；如果没有可用候选，仍可能返回 502/503。相关测试见 [SSE 输出前故障转移](tests/integration/test-stream-failover-before-output.mjs)。
+
+如果有效输出已经开始发送，代理不会把第二家供应商的响应拼接到这条 SSE 中；当前请求仍可能断流，是否自动重试取决于客户端。这样可以避免把两个供应商的事件、响应 ID 或工具调用混成同一个结果。一次输出前重试也可能已被首家上游计费。
+
+版本更新时，固定端口前置器让正在传输的 SSE 留在原工作进程完成，再按请求和会话检查点逐步交接。它不会把已经开始的 SSE 中途搬到新进程。供应商全部不可用、错误不可重试、交接队列达到边界或进程发生无法恢复的故障时，仍可能返回错误；项目不承诺所有故障下对话都不中断。交接演练见 [会话逐步交接测试](tests/integration/test-handoff-session.mjs)。
 
 ## 界面预览
 
@@ -211,9 +234,9 @@ GitHub Actions 配置覆盖 Linux/Node.js 22 和 macOS/Node.js 24 的安装、�
 
 ## English overview
 
-CCS Lite is a self-hosted local AI API gateway and provider manager for Codex, Claude Code, CC Switch, and compatible clients. It proxies OpenAI Responses, Chat Completions, and Anthropic Messages endpoints to user-configured upstream providers.
+CCS Lite is a self-hosted local AI API gateway and provider manager for Codex, Claude Code, CC Switch, and compatible clients. It can run on its own or behind CC Switch, which also provides local routing and automatic failover. CCS Lite focuses on the runtime gateway, request-level diagnostics, pre-output SSE failover, usage tracking, and session-aware worker upgrades.
 
-Features include priority-based routing, automatic failover, sticky sessions with recovery migration, per-group endpoints, daily token usage, historical billing estimates, and SSE streaming. A fixed-port supervisor supports gradual worker upgrades at request boundaries and a designated fallback release. Upstream protocol compatibility and existing network connections still define the limits of recovery; the project does not promise uninterrupted service through every failure.
+Features include priority-based routing, automatic failover, sticky sessions with recovery migration, per-group endpoints, daily token usage, historical billing estimates, and SSE streaming. A fixed-port supervisor supports gradual worker upgrades at request boundaries and a designated fallback release. Retryable SSE failures can switch providers before response output begins. Once output has been sent, the stream cannot be safely continued with another provider, and the client may need to retry. The project does not promise uninterrupted service through every failure.
 
 Use Node.js 22 or 24 on macOS or Linux; WSL2 is recommended on Windows. Start with the four commands in [Quick start](#快速开始). No outer toolkit or portable CLI is required. Provider credentials and runtime data stay outside Git. See the [MIT license](LICENSE) and [issue tracker](https://github.com/Red-noblue/ccslite/issues).
 
