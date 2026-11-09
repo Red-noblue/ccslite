@@ -1,0 +1,73 @@
+{"diagnostic":"fetch_failure","url":"http://127.0.0.1:53112/api/status","name":"TypeError","message":"fetch failed","cause":{"name":"Error","code":"ECONNREFUSED","message":"connect ECONNREFUSED 127.0.0.1:53112"}}
+{"diagnostic":"fetch_failure","url":"http://127.0.0.1:53112/api/status","name":"TypeError","message":"fetch failed","cause":{"name":"Error","code":"ECONNREFUSED","message":"connect ECONNREFUSED 127.0.0.1:53112"}}
+{"event":"handoff_activated","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+{"event":"handoff_queue_released","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+{"event":"handoff_target_set","worker":"0.2.13-rc.4-20261026","pid":8217}
+{"event":"handoff_current_set","phase":"active","worker":"0.2.13-rc.4-20261026"}
+{"event":"health_monitor_started","intervalMs":5000,"timeoutMs":1000,"failureThreshold":3,"message":"已启动本机服务健康观察，异常仅提示，不中断连接。","releaseId":"0.2.13-rc.4-20261026","pid":8217}
+{"event":"handoff_preparing","phase":"preparing","candidate":"0.2.13-20261027"}
+{"diagnostic":"fetch_failure","url":"http://127.0.0.1:53128/api/status","name":"TypeError","message":"fetch failed","cause":{"name":"Error","code":"ECONNREFUSED","message":"connect ECONNREFUSED 127.0.0.1:53128"}}
+{"diagnostic":"fetch_failure","url":"http://127.0.0.1:53128/api/status","name":"TypeError","message":"fetch failed","cause":{"name":"Error","code":"ECONNREFUSED","message":"connect ECONNREFUSED 127.0.0.1:53128"}}
+{"event":"handoff_draining","phase":"draining","oldWorker":"0.2.13-rc.4-20261026","candidate":"0.2.13-20261027"}
+{"event":"handoff_draining","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":1,"queuedBytes":50,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":2,"queuedBytes":100,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":3,"queuedBytes":150,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":4,"queuedBytes":200,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":5,"queuedBytes":250,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":6,"queuedBytes":301,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":7,"queuedBytes":352,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":8,"queuedBytes":402,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":9,"queuedBytes":452,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":10,"queuedBytes":502,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":11,"queuedBytes":552,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":12,"queuedBytes":602,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":13,"queuedBytes":653,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":14,"queuedBytes":704,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":15,"queuedBytes":755,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":16,"queuedBytes":806,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":17,"queuedBytes":857,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":18,"queuedBytes":908,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":19,"queuedBytes":959,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":20,"queuedBytes":1010,"inFlight":0}
+{"event":"handoff_activated","queuedRequests":20,"queuedBytes":1010,"inFlight":0}
+{"event":"handoff_queue_released","queuedRequests":20,"queuedBytes":1010,"inFlight":20}
+{"event":"handoff_target_set","worker":"0.2.13-20261027","pid":8237}
+{"event":"handoff_activated","queuedRequests":20,"queuedBytes":1010,"inFlight":20}
+{"event":"handoff_queue_released","queuedRequests":20,"queuedBytes":1010,"inFlight":20}
+{"event":"handoff_activated","phase":"active","worker":"0.2.13-20261027","retiredWorker":"0.2.13-rc.4-20261026"}
+{"event":"health_monitor_started","intervalMs":5000,"timeoutMs":1000,"failureThreshold":3,"message":"已启动本机服务健康观察，异常仅提示，不中断连接。","releaseId":"0.2.13-20261027","pid":8237}
+{"milestone":"waiting_default_observation","observeMs":30000,"intervalMs":5000}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":8237,"healthySince":1793032701144,"consecutiveSuccesses":1,"lastCheckedAt":1793032701144,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":8237,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":8237,"healthySince":1793032701144,"consecutiveSuccesses":2,"lastCheckedAt":1793032706153,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":8237,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":8237,"healthySince":1793032701144,"consecutiveSuccesses":3,"lastCheckedAt":1793032711159,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":8237,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":8237,"healthySince":1793032701144,"consecutiveSuccesses":4,"lastCheckedAt":1793032716164,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":8237,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":8237,"healthySince":1793032701144,"consecutiveSuccesses":5,"lastCheckedAt":1793032721169,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":8237,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":8237,"healthySince":1793032701144,"consecutiveSuccesses":6,"lastCheckedAt":1793032726177,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":8237,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"event":"handoff_previous_retired","phase":"active","worker":"0.2.13-rc.4-20261026"}
+{"event":"handoff_draining","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+{"event":"handoff_draining","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+{"event":"handoff_recovery_started","phase":"recovering","from":"0.2.13-20261027","to":"0.2.13-rc.4-20261026","reason":"工作进程退出：SIGKILL"}
+{"event":"handoff_request_queued","queuedRequests":1,"queuedBytes":52,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":2,"queuedBytes":104,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":3,"queuedBytes":156,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":4,"queuedBytes":208,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":5,"queuedBytes":260,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":6,"queuedBytes":312,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":7,"queuedBytes":364,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":8,"queuedBytes":416,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":9,"queuedBytes":468,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":10,"queuedBytes":520,"inFlight":0}
+{"diagnostic":"fetch_failure","url":"http://127.0.0.1:53308/api/status","name":"TypeError","message":"fetch failed","cause":{"name":"Error","code":"ECONNREFUSED","message":"connect ECONNREFUSED 127.0.0.1:53308"}}
+{"diagnostic":"fetch_failure","url":"http://127.0.0.1:53308/api/status","name":"TypeError","message":"fetch failed","cause":{"name":"Error","code":"ECONNREFUSED","message":"connect ECONNREFUSED 127.0.0.1:53308"}}
+{"event":"handoff_activated","queuedRequests":10,"queuedBytes":520,"inFlight":0}
+{"event":"handoff_queue_released","queuedRequests":10,"queuedBytes":520,"inFlight":10}
+{"event":"handoff_target_set","worker":"0.2.13-rc.4-20261026","pid":8368}
+{"event":"handoff_activated","queuedRequests":10,"queuedBytes":520,"inFlight":10}
+{"event":"handoff_queue_released","queuedRequests":10,"queuedBytes":520,"inFlight":10}
+{"event":"handoff_recovery_completed","phase":"active","worker":"0.2.13-rc.4-20261026","reason":"工作进程退出：SIGKILL"}
+{"event":"health_monitor_started","intervalMs":5000,"timeoutMs":1000,"failureThreshold":3,"message":"已启动本机服务健康观察，异常仅提示，不中断连接。","releaseId":"0.2.13-rc.4-20261026","pid":8368}
+{"event":"handoff_closed","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+{"event":"handoff_closed","phase":"closed"}
+{"event":"handoff_closed","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+{"milestone":"passed","passed":true,"nodeVersion":"v18.20.8","productionChanged":false,"realProviderRequests":false,"publicPort":53097,"qualityPort":53098,"requests":32,"uniqueUpstreamCalls":32,"usageRecords":33,"historicalRecords":1,"mainAndGroupSseCompleted":true,"queuedRequestsSentOnce":20,"defaultObservationMs":34990,"coldRecoveryMs":1164,"configPreservedAfterRollback":true,"packages":[{"releaseId":"0.2.13-20261027","version":"0.2.13","contentHash":"16d3e4a8c2bf1420e96b93d1129237798e7215ae5df0c62b305b5110b374585c"},{"releaseId":"0.2.13-rc.4-20261026","version":"0.2.13-rc.4","contentHash":"fbf5022bcc8bc6ec8056b8a468bbf853d85dca6f07fa6287b2ce1e55c98ccf27"}]}

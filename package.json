@@ -1,0 +1,43 @@
+{
+  "name": "lite-ccswitch-server",
+  "version": "0.2.19",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && npm run web:build",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "node --test tests/unit/*.mjs",
+    "test:integration": "node --test --test-concurrency=1 tests/integration/*.mjs",
+    "release": "node release.mjs",
+    "test:sse": "node --test tests/unit/test-sse-inspector.mjs tests/integration/test-graceful-sse-restart.mjs",
+    "test:shutdown": "node --test tests/unit/test-shutdown.mjs tests/integration/test-graceful-sse-restart.mjs",
+    "web:dev": "node node_modules/vite/bin/vite.js --config web/vite.config.js",
+    "web:build": "node node_modules/vite/bin/vite.js build --config web/vite.config.js",
+    "start:handoff": "node handoff-runner.mjs --workspace",
+    "check:public": "node scripts/check-public-files.mjs",
+    "test:workspace": "node tests/manual/test-workspace-handoff.mjs"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "vite": "^6.4.5",
+    "typescript": "^5.6.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "lucide-react": "^0.468.0",
+    "undici": "^6.29.1"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "description": "Local AI API gateway: multi-provider routing, automatic failover, SSE streaming and token usage dashboard. 本地 AI 代理与供应商切换管理台。",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Red-noblue/ccslite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Red-noblue/ccslite/issues"
+  },
+  "homepage": "https://github.com/Red-noblue/ccslite#readme"
+}

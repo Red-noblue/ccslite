@@ -1,0 +1,17 @@
+[
+  {
+    "iteration": 1,
+    "exitCode": 0,
+    "log": "/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/checks/rc4-recovery-control-1.log"
+  },
+  {
+    "iteration": 2,
+    "exitCode": 0,
+    "log": "/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/checks/rc4-recovery-control-2.log"
+  },
+  {
+    "iteration": 3,
+    "exitCode": 0,
+    "log": "/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/checks/rc4-recovery-control-3.log"
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "serial-node24-unit": {
+    "exitCode": 0,
+    "seconds": 0.644,
+    "log": "/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/checks/serial-node24-unit.log"
+  },
+  "serial-node24-focused": {
+    "exitCode": 0,
+    "seconds": 20.291,
+    "log": "/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/checks/serial-node24-focused.log"
+  },
+  "archive-verify-stable": {
+    "exitCode": 0,
+    "seconds": 1.291,
+    "log": "/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/checks/archive-verify-stable.log"
+  },
+  "archive-verify-rollback": {
+    "exitCode": 0,
+    "seconds": 0.661,
+    "log": "/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/checks/archive-verify-rollback.log"
+  }
+}

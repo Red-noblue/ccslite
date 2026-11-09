@@ -1,0 +1,98 @@
+TAP version 13
+# Subtest: 合并开关只影响自动路由，关闭项仍可手动使用
+ok 1 - 合并开关只影响自动路由，关闭项仍可手动使用
+  ---
+  duration_ms: 324.033875
+  ...
+# Subtest: 业务连续成功回迁旧会话，按组优先级和模型隔离，并保留响应上下文回退
+ok 2 - 业务连续成功回迁旧会话，按组优先级和模型隔离，并保留响应上下文回退
+  ---
+  duration_ms: 361.223625
+  ...
+# Subtest: 后来启动的分组沿用同一每日周期，复制供应商只检测一次且覆盖独有供应商
+ok 3 - 后来启动的分组沿用同一每日周期，复制供应商只检测一次且覆盖独有供应商
+  ---
+  duration_ms: 4215.629292
+  ...
+# Subtest: 客户端会话供应商会用真实请求上下文完成主动连通性测试
+ok 4 - 客户端会话供应商会用真实请求上下文完成主动连通性测试
+  ---
+  duration_ms: 741.264291
+  ...
+# Subtest: CCOK 主动测试会恢复成功供应商并避开失败供应商
+ok 5 - CCOK 主动测试会恢复成功供应商并避开失败供应商
+  ---
+  duration_ms: 6359.428417
+  ...
+# Subtest: 默认路由按 sortIndex 使用普通供应商，不把 cx 账号当成隐藏路由池
+ok 6 - 默认路由按 sortIndex 使用普通供应商，不把 cx 账号当成隐藏路由池
+  ---
+  duration_ms: 357.662583
+  ...
+# Subtest: 优雅重启会等待活动 SSE 收到 response.completed
+ok 7 - 优雅重启会等待活动 SSE 收到 response.completed
+  ---
+  duration_ms: 880.479916
+  ...
+# Subtest: 分组端口真实转发、隔离会话与用量，热更新保留流并统一优雅关闭
+ok 8 - 分组端口真实转发、隔离会话与用量，热更新保留流并统一优雅关闭
+  ---
+  duration_ms: 737.618125
+  ...
+# Subtest: 复制只保留配置，跨组计费、活动与价格数据隔离且重启后保持
+ok 9 - 复制只保留配置，跨组计费、活动与价格数据隔离且重启后保持
+  ---
+  duration_ms: 618.338583
+  ...
+# Subtest: 旧配置迁移为默认分组，复制接口保留全部供应商引用
+ok 10 - 旧配置迁移为默认分组，复制接口保留全部供应商引用
+  ---
+  duration_ms: 246.074167
+  ...
+# Subtest: 迟到的只读准备不会覆盖恢复激活，停止等待后台诊断落盘
+ok 11 - 迟到的只读准备不会覆盖恢复激活，停止等待后台诊断落盘
+  ---
+  duration_ms: 27834.307708
+  ...
+# {"diagnosticRecords":2,"upstreamCalls":11,"latePrepareCancelled":true,"gracefulDiagnosticFlush":true}
+# 候选版本启动或激活失败，尝试回退：工作进程提前退出：
+# {"event":"handoff_activated","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+# {"event":"handoff_queue_released","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+# {"event":"handoff_target_set","worker":"good-fallback","pid":1613}
+# {"event":"handoff_current_set","phase":"active","worker":"good-fallback"}
+# {"event":"health_monitor_started","intervalMs":5000,"timeoutMs":1000,"failureThreshold":3,"message":"已启动本机服务健康观察，异常仅提示，不中断连接。","releaseId":"good-fallback","pid":1613}
+# {"event":"handoff_closed","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+# {"event":"handoff_closed","phase":"closed"}
+# {"event":"handoff_closed","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+# Subtest: 固定监听候选启动失败时清理进程并启动回退包
+ok 12 - 固定监听候选启动失败时清理进程并启动回退包
+  ---
+  duration_ms: 19065.001
+  ...
+# Subtest: 候选预热成功但激活失败时清理候选，回退仍保留历史数据
+not ok 13 - 候选预热成功但激活失败时清理候选，回退仍保留历史数据
+  ---
+  duration_ms: 36162.256291
+  location: 'file:///path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/source-terminal-only/tests/integration/test-handoff-boot-fallback.mjs:55:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 30000ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: 旧进程退役后仍可手动回退，崩溃时重新启动回退包并接管队列
+not ok 14 - 旧进程退役后仍可手动回退，崩溃时重新启动回退包并接管队列
+  ---
+  duration_ms: 30043.964833
+  location: 'file:///path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/source-terminal-only/tests/integration/test-handoff-cold-recovery.mjs:26:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 30000ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: 回退进程尚未稳定就再次崩溃时停止自动重试，公开端口报告受控故障
+not ok 15 - 回退进程尚未稳定就再次崩溃时停止自动重试，公开端口报告受控故障
+  ---
+  duration_ms: 20039.154959
+  location: 'file:///path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/source-terminal-only/tests/integration/test-handoff-cold-recovery.mjs:60:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 20000ms'
+  code: 'ERR_TEST_FAILURE'
+  ...

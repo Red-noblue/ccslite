@@ -1,0 +1,26 @@
+{
+  "archive": "releases/lite-ccswitch-stable-upgrade-rc4-20261026.tar.gz",
+  "sha256": "371e0ff3da7fcda0ca9250898e314cd795e4af9ab5eade519ecf2cbddee8a581",
+  "bytes": 53867247,
+  "entries": 16739,
+  "restoredTo": "/path/to/projects/temp/lite-ccswitch-upgrade-20261026-QbQuNg/archive-verify-2h_5a_2_",
+  "nodeVersion": "v18.20.8",
+  "packages": [
+    {
+      "verified": true,
+      "releaseId": "0.2.12-handoff.1-20261026",
+      "contentHash": "6c5b60d79c0af1e9cc2deaeab367f4104ac0d4a0a5d01570414d3818fb577eee"
+    },
+    {
+      "verified": true,
+      "releaseId": "0.2.13-rc.4-20261026",
+      "contentHash": "fbf5022bcc8bc6ec8056b8a468bbf853d85dca6f07fa6287b2ce1e55c98ccf27"
+    },
+    {
+      "verified": true,
+      "releaseId": "0.2.12-20261024",
+      "contentHash": "8c4e2c1cfcdecca5a046ee0133035a364edc77311c0ab261d3d26f1092e69f84"
+    }
+  ],
+  "passed": true
+}

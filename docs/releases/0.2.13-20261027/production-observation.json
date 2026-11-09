@@ -1,0 +1,177 @@
+{
+  "recordedAt": "2026-10-26T16:02:57.096644+00:00",
+  "startedAt": "2026-10-26T15:43:21.475Z",
+  "runtime": {
+    "processId": 91986,
+    "build": {
+      "version": "0.2.13-rc.4",
+      "releaseId": "0.2.13-rc.4-20261026",
+      "codeHash": "eface68392992a683c825435e685f967715921807a6d60e8714d074439e714d4",
+      "packaged": true
+    },
+    "uptimeSeconds": 1174,
+    "totalRequests": 12360,
+    "successRequests": 11230,
+    "failedRequests": 1128,
+    "handoff": {
+      "worker": true,
+      "readOnly": false,
+      "actualMainPort": 53846,
+      "pendingRequests": 2,
+      "phase": "active",
+      "current": "0.2.13-rc.4-20261026",
+      "previous": null,
+      "leaseFault": null,
+      "health": {
+        "worker": "0.2.13-rc.4-20261026",
+        "pid": 91986,
+        "healthySince": 1793030483382,
+        "consecutiveSuccesses": 19,
+        "lastCheckedAt": 1793030574760,
+        "lastError": null
+      },
+      "groupChange": null,
+      "listener": "fixed",
+      "queue": {
+        "state": "open",
+        "queuedRequests": 0,
+        "queuedBytes": 0,
+        "inFlight": 1
+      },
+      "workerPid": 91986
+    }
+  },
+  "persistence": {
+    "usageRecordCount": 28255,
+    "loaded": true,
+    "lastReadError": null,
+    "lastWriteError": null,
+    "failedWrites": 0,
+    "malformedRecordCount": 0
+  },
+  "groups": [
+    {
+      "name": "默认分组",
+      "listener": {
+        "host": "127.0.0.1",
+        "port": 15720
+      },
+      "totalRequests": 12360
+    },
+    {
+      "name": "高质量",
+      "listener": {
+        "host": "127.0.0.1",
+        "port": 15722
+      },
+      "totalRequests": 0
+    }
+  ],
+  "usageSinceStart": [
+    {
+      "category": "ccok_probe",
+      "probeSource": "recovery",
+      "statusCode": 403,
+      "groupId": "default",
+      "count": 80
+    },
+    {
+      "category": "",
+      "probeSource": "",
+      "statusCode": 200,
+      "groupId": "default",
+      "count": 76
+    },
+    {
+      "category": "ccok_probe",
+      "probeSource": "recovery",
+      "statusCode": 200,
+      "groupId": "default",
+      "count": 9
+    }
+  ],
+  "errors": [
+    {
+      "category": "ccok_probe",
+      "failureClass": "authentication",
+      "message": "{\"error\":\"当前所有可用套餐余额已耗尽，请补充配额：https://upstream.example.invalid/purchase\",\"purchaseUrl\":\"https://upstream.example.invalid/purchase\"}",
+      "count": 80
+    }
+  ],
+  "providers": [
+    {
+      "provider": "匿名供应商2",
+      "category": "ccok_probe",
+      "statusCode": 403,
+      "count": 27
+    },
+    {
+      "provider": "匿名供应商3",
+      "category": "ccok_probe",
+      "statusCode": 403,
+      "count": 26
+    },
+    {
+      "provider": "匿名供应商4",
+      "category": "ccok_probe",
+      "statusCode": 403,
+      "count": 27
+    },
+    {
+      "provider": "匿名供应商1",
+      "category": "",
+      "statusCode": 200,
+      "count": 68
+    },
+    {
+      "provider": "匿名供应商1",
+      "category": "ccok_probe",
+      "statusCode": 200,
+      "count": 3
+    },
+    {
+      "provider": "匿名供应商3",
+      "category": "ccok_probe",
+      "statusCode": 200,
+      "count": 2
+    },
+    {
+      "provider": "匿名供应商2",
+      "category": "ccok_probe",
+      "statusCode": 200,
+      "count": 2
+    },
+    {
+      "provider": "匿名供应商4",
+      "category": "ccok_probe",
+      "statusCode": 200,
+      "count": 2
+    },
+    {
+      "provider": "匿名供应商3",
+      "category": "",
+      "statusCode": 200,
+      "count": 3
+    },
+    {
+      "provider": "匿名供应商2",
+      "category": "",
+      "statusCode": 200,
+      "count": 5
+    }
+  ],
+  "eventCounts": {
+    "handoff_activated": 1,
+    "handoff_queue_released": 1,
+    "handoff_target_set": 1,
+    "handoff_current_set": 1,
+    "health_monitor_started": 1,
+    "handoff_request_finished": 778
+  },
+  "handoffAnomalies": [],
+  "realRequestsSentByThisAudit": 0,
+  "publicCopy": {
+    "anonymized": true,
+    "note": "公开副本已替换真实供应商标识和上游地址，保留历史验收的匿名计数。"
+  }
+}

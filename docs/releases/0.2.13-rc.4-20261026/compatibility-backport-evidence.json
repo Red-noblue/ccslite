@@ -1,0 +1,34 @@
+{
+  "base": "/path/to/projects/temp/lite-ccswitch-upgrade-20261026-QbQuNg/releases/production-baseline-0.2.12-20261026",
+  "source": "/path/to/projects/temp/lite-ccswitch-upgrade-20261026-QbQuNg/compatibility-source",
+  "version": "0.2.12-handoff.1",
+  "businessFunctionsIdenticalToOriginal": {
+    "handleProxyRequest": "a3608d826bdf4f4bb4f110164bd3ffd70d1ea668c58463633db681588d8c9fb4",
+    "forwardToProvider": "0d2bb72b785cbc93b4e844090aa0d27c87db17bb8b36d78d7c1cf1dc7ac4cbb0",
+    "waitForRetry": "841c52f757f9aea8050aba37f005346d8e5325b20fd03561e2984403c0690022",
+    "safeReadErrorBody": "f0c7e7201708d187b1fb6b7ae8c175b54b3a8982d7e2f0e1c34d11f68818c450"
+  },
+  "protocolModules": [
+    "connectivity-scheduler.js",
+    "group-listeners.js",
+    "payload-diagnostics.js",
+    "runtime-config.js",
+    "shutdown-controller.js",
+    "handoff-rpc.js"
+  ],
+  "changedFiles": [
+    "README.md",
+    "VERSION.json",
+    "lib/connectivity-scheduler.js",
+    "lib/group-listeners.js",
+    "lib/handoff-rpc.js",
+    "lib/payload-diagnostics.js",
+    "lib/runtime-config.js",
+    "lib/shutdown-controller.js",
+    "package-lock.json",
+    "package.json",
+    "server.js"
+  ],
+  "originalStablePackageModified": false,
+  "acceptedForProduction": false
+}

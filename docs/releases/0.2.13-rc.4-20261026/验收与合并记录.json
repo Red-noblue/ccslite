@@ -1,0 +1,465 @@
+{
+  "recordedAt": "2026-10-26T13:21:20.282008+00:00",
+  "status": "合并完成，所有收尾检查通过，等待用户手动切换",
+  "codeVersion": "0.2.13-rc.4",
+  "productionRuntimeVersion": "0.2.12-20261024",
+  "productionRestarted": false,
+  "productionDataModifiedByMerge": false,
+  "authorization": "用户批准先合并代码和版本包，保持15720继续运行，稍后自行重启",
+  "backup": "tools/lite-ccswitch/release-backups/pre-rc4-merge-20261026T131946Z.tar.gz",
+  "backupSha256": "3cbce84712e0f2dfe242c169247e5fabe10742059822a3e2e50d37db44537e2e",
+  "candidate": "tools/lite-ccswitch/releases/0.2.13-rc.4-20261026",
+  "fallback": "tools/lite-ccswitch/releases/0.2.12-handoff.1-20261026",
+  "checks": {
+    "unit": {
+      "tests": 183,
+      "pass": 183,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 486.003709,
+      "log": "unit-final.log"
+    },
+    "serialIntegration": {
+      "tests": 81,
+      "pass": 81,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 218234.973291,
+      "log": "integration-final.log"
+    },
+    "node18Unit": {
+      "tests": 183,
+      "pass": 183,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 35182.447334,
+      "log": "unit-node18-final.log"
+    },
+    "node18SerialIntegration": {
+      "tests": 81,
+      "pass": 81,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 286636.915916,
+      "log": "integration-node18-final.log"
+    },
+    "compatibilityRegression": {
+      "tests": 187,
+      "pass": 187,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 65368.146208,
+      "log": "compatibility-regression-current.log"
+    },
+    "crossVersionFrozenPackages": {
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 5725.098417,
+      "log": "cross-version-final.log"
+    },
+    "crossVersionDefaultNode18": {
+      "passed": true,
+      "nodeVersion": "v18.20.8",
+      "productionChanged": false,
+      "realProviderRequests": false,
+      "publicPort": 49803,
+      "qualityPort": 49804,
+      "requests": 32,
+      "uniqueUpstreamCalls": 32,
+      "usageRecords": 33,
+      "historicalRecords": 1,
+      "mainAndGroupSseCompleted": true,
+      "queuedRequestsSentOnce": 20,
+      "defaultObservationMs": 34988,
+      "coldRecoveryMs": 1053,
+      "configPreservedAfterRollback": true,
+      "packages": [
+        {
+          "releaseId": "0.2.13-rc.4-20261026",
+          "version": "0.2.13-rc.4",
+          "contentHash": "fbf5022bcc8bc6ec8056b8a468bbf853d85dca6f07fa6287b2ce1e55c98ccf27"
+        },
+        {
+          "releaseId": "0.2.12-handoff.1-20261026",
+          "version": "0.2.12-handoff.1",
+          "contentHash": "6c5b60d79c0af1e9cc2deaeab367f4104ac0d4a0a5d01570414d3818fb577eee"
+        }
+      ]
+    },
+    "crossVersionDefaultNode24": {
+      "passed": true,
+      "productionChanged": false,
+      "realProviderRequests": false,
+      "publicPort": 64798,
+      "qualityPort": 64799,
+      "requests": 32,
+      "uniqueUpstreamCalls": 32,
+      "usageRecords": 33,
+      "historicalRecords": 1,
+      "mainAndGroupSseCompleted": true,
+      "queuedRequestsSentOnce": 20,
+      "defaultObservationMs": 34988,
+      "coldRecoveryMs": 1154,
+      "configPreservedAfterRollback": true,
+      "packages": [
+        {
+          "releaseId": "0.2.13-rc.4-20261026",
+          "version": "0.2.13-rc.4",
+          "contentHash": "fbf5022bcc8bc6ec8056b8a468bbf853d85dca6f07fa6287b2ce1e55c98ccf27"
+        },
+        {
+          "releaseId": "0.2.12-handoff.1-20261026",
+          "version": "0.2.12-handoff.1",
+          "contentHash": "6c5b60d79c0af1e9cc2deaeab367f4104ac0d4a0a5d01570414d3818fb577eee"
+        }
+      ],
+      "nodeVersion": "v24.20.0"
+    },
+    "archiveRestore": {
+      "archive": "tools/lite-ccswitch/release-backups/lite-ccswitch-stable-upgrade-rc4-20261026.tar.gz",
+      "sha256": "371e0ff3da7fcda0ca9250898e314cd795e4af9ab5eade519ecf2cbddee8a581",
+      "bytes": 53867247,
+      "entries": 16739,
+      "restoredTo": "/path/to/projects/temp/lite-ccswitch-upgrade-20261026-QbQuNg/archive-verify-2h_5a_2_",
+      "nodeVersion": "v18.20.8",
+      "packages": [
+        {
+          "verified": true,
+          "releaseId": "0.2.12-handoff.1-20261026",
+          "contentHash": "6c5b60d79c0af1e9cc2deaeab367f4104ac0d4a0a5d01570414d3818fb577eee"
+        },
+        {
+          "verified": true,
+          "releaseId": "0.2.13-rc.4-20261026",
+          "contentHash": "fbf5022bcc8bc6ec8056b8a468bbf853d85dca6f07fa6287b2ce1e55c98ccf27"
+        },
+        {
+          "verified": true,
+          "releaseId": "0.2.12-20261024",
+          "contentHash": "8c4e2c1cfcdecca5a046ee0133035a364edc77311c0ab261d3d26f1092e69f84"
+        }
+      ],
+      "passed": true
+    },
+    "finalSourceAndPackageIntegrity": {
+      "passed": true,
+      "sourceMatchesFrozenCandidate": true,
+      "files": 5341,
+      "packages": [
+        {
+          "releaseId": "0.2.13-rc.4-20261026",
+          "contentHash": "fbf5022bcc8bc6ec8056b8a468bbf853d85dca6f07fa6287b2ce1e55c98ccf27",
+          "codeHash": "eface68392992a683c825435e685f967715921807a6d60e8714d074439e714d4"
+        },
+        {
+          "releaseId": "0.2.12-handoff.1-20261026",
+          "contentHash": "6c5b60d79c0af1e9cc2deaeab367f4104ac0d4a0a5d01570414d3818fb577eee",
+          "codeHash": "46a4d5fa764f4acac16328fe5e4cae0605842fe945f3d5a19be5025b59908097"
+        },
+        {
+          "releaseId": "0.2.12-20261024",
+          "contentHash": "8c4e2c1cfcdecca5a046ee0133035a364edc77311c0ab261d3d26f1092e69f84",
+          "codeHash": "218e596ea5e3cea1deea047493ce2349b5e63caf581e73867c66f9ef51a5c4b4"
+        }
+      ]
+    }
+  },
+  "finalPreMergeCheck": {
+    "nodeVersion": "v18.20.8",
+    "passed": 5,
+    "failed": 0,
+    "log": "pre-merge-final-check.log"
+  },
+  "limitations": [
+    "首次迁移以及固定监听器自身更新需要人工维护窗口",
+    "已随崩溃进程断开的请求不重放；尚未落盘的崩溃中请求不属于无损承诺",
+    "交接队列与排空期限有界，超限返回受控错误",
+    "只验证本机假上游；正式客户端与真实供应商的逐组业务验证待用户手动切换后执行",
+    "兼容回退包经过修改；原始0.2.12仅用于人工应急恢复"
+  ],
+  "observationNote": {
+    "notAcceptedRun": "final-drill-node18.log",
+    "description": "与大量 Node18 单元测试并发的初次观察未在45秒期限内完成，缺少逐次状态证据，触发原因未确证；不计作通过。",
+    "acceptedInstrumentedRun": "final-drill-node18b.log",
+    "acceptedWindowMs": 45000,
+    "observedMs": 34988,
+    "interpretation": "连续健康观察允许延长，不能把45秒当作无条件释放旧进程的保证；该保护行为另有主动卡住/恢复演练。"
+  },
+  "changes": [
+    {
+      "path": "README.md",
+      "before": "9829a485cb546742c8ec13a58b3156c3d98f6d2d6f00b58714560312ebbfb71f",
+      "after": "85294a9ccb0bf90daf7e581f63f520d46ef1e0770a3272124fedfcf9447b3efc",
+      "frozenCandidateSha256": "bfb0e560c79ea5de0b6d75762b99f7eb93436fe60646a7245a5355bbf1559567",
+      "note": "更新为已合并、待手动切换，补充正式路径和验收说明"
+    },
+    {
+      "path": "VERSION.json",
+      "before": "b7fbcdcb852eb9332a5b980806536ba1745c779f11470f9ec2b30da7a10d30f4",
+      "after": "e501613b3102a007ad9393b265faf6ecfb4c3be7d9e126ff53c5d7526264303d"
+    },
+    {
+      "path": "handoff-runner.mjs",
+      "before": null,
+      "after": "14eed1b9f9c58ad876f86fa1752e766a447317889cf6463fb4e6ecabd7f3e264"
+    },
+    {
+      "path": "lib/connectivity-scheduler.js",
+      "before": "349b142bd52419d9fc345a10c11bdcebf703d6687df4540b6c36e6b1122dff38",
+      "after": "14b9b44110cf897e9c2eb3413ee1af4b89648d04828f0be1d650c21717b3dee1"
+    },
+    {
+      "path": "lib/group-listeners.js",
+      "before": "f98c2ad690616857b3ba83adf1b9e2eae7ea50a6394e6dd90ba4df7b92e81cd7",
+      "after": "0c6c677da0e402e25565017772a971d65efb4466d1a23d87cb95e30bea2322ec"
+    },
+    {
+      "path": "lib/handoff-control.js",
+      "before": null,
+      "after": "899a0595bb5be32e536840f7191e54f5c60cc069ce60b7b0130bd3157dc7183a"
+    },
+    {
+      "path": "lib/handoff-coordinator.js",
+      "before": null,
+      "after": "c10cc0601cccd46bce6ea5cb4eddc7cb98ee8f4df72ec96f1525989827733ecb"
+    },
+    {
+      "path": "lib/handoff-listener.js",
+      "before": null,
+      "after": "5433ed6077555989b9f73e6c575fab2c04c6bb7a63a536e858e537ea0b0ad704"
+    },
+    {
+      "path": "lib/handoff-queue.js",
+      "before": null,
+      "after": "bed3dc0da494213ba9f7d024d5dc4f1113f828a54c3a347098cb517c71b83c26"
+    },
+    {
+      "path": "lib/handoff-rpc.js",
+      "before": null,
+      "after": "12dfe115c4b5eadda6dfb2972ab81f24e248bbac8bb8ea31cf59a42e79b65596"
+    },
+    {
+      "path": "lib/handoff-supervisor.js",
+      "before": null,
+      "after": "b6c5e94dc9395633fc52bc4877bbd2f53d67a8be82727a30da52222d4fdf7ab6"
+    },
+    {
+      "path": "lib/payload-diagnostics.js",
+      "before": "df6b36d6e7f7b872213adf596d7b2c843b81cb47ee6ad2dde0f80924d0bdf4ab",
+      "after": "b244b7346388ac625f04c7cc960ec92c8c2caafc2f4eb5dfa0999e33fb8e1501"
+    },
+    {
+      "path": "lib/release-health.js",
+      "before": null,
+      "after": "18327493cd6235650c7aee8643e206ea3ec564018c2f7acfd47ac8f03032e417"
+    },
+    {
+      "path": "lib/release-runner.js",
+      "before": "41cd6af1cd1ce71cc746540886130b4fc4f7db41e5f091761ff47ed865bd0489",
+      "after": "29d361c9d3c839e10d24f8d3b88b6c1cd4b08a00c6f38bdc9af83977a906298b"
+    },
+    {
+      "path": "lib/release-snapshot.js",
+      "before": "7281e0372fc426f0fb0fc9362c3eaba7a5793839fa2a57a6554b8d78c3fda743",
+      "after": "bbada252e8daeeb5b07b48c85ef0933baa135dc243dd495569c155a4021a79c7"
+    },
+    {
+      "path": "lib/runtime-config.js",
+      "before": "560b05fd55c7fa72f8c722f052df41de1ef60137a890c7b4ae54fcdfe14bce1f",
+      "after": "0d12f6adc4737a8bd39223918d90ffc0ea98b94e101f08fd832d40f37b928adf"
+    },
+    {
+      "path": "lib/shutdown-controller.js",
+      "before": "27628330b98b4603f8e963a61545ea837832de34252da942a9c1bf215dadffba",
+      "after": "2d608f4a9d45ef77be694b98405d388c9b91d782e53b55ce2a4a9fe8e77e6ac3"
+    },
+    {
+      "path": "lib/upstream-error-body.js",
+      "before": null,
+      "after": "45d2897414bf18e94d81b43e0ddd92900218f0892925077870a05da0b3f01280"
+    },
+    {
+      "path": "lib/write-lease.js",
+      "before": null,
+      "after": "88285a18b61c0b8bf0415680a378c8884e6cb48d6502d983c8367c2eda609fd3"
+    },
+    {
+      "path": "package-lock.json",
+      "before": "e4ec728a3df8bd6e7150e8975bfc54cc2f5835a282956225e6a038af2b054a40",
+      "after": "1ccf7b69f340e1438742b83d585643ba490bcecaab0c7f49d4bc37d16e0e0f7a"
+    },
+    {
+      "path": "package.json",
+      "before": "0a2cca0959030e5ca501ad618ab36c005b9f8090c0e328b5cff7d4c9b99e2c94",
+      "after": "8a62f6aa6204e1ec0185a2a5c3ebcc8f3def564a37f96269cff8cc58f7dbe6cd"
+    },
+    {
+      "path": "release.mjs",
+      "before": "69ffb4501bdcae8920baa6697cb2f0b02ed82bf32c1ef0153449d58928075b3c",
+      "after": "151245670ab72d09f3ef293efd1b53061802773922bf654f9c62de863306c278"
+    },
+    {
+      "path": "server.js",
+      "before": "5bf5b554740b61f91b977ef0ecc0220387ac6c26437f2d3d6869891c23bf7bb0",
+      "after": "79d2c1745f30a171d23de65443977bb8ab7a37be3e9aaf9888987fd9bb5bd240"
+    },
+    {
+      "path": "tests/integration/test-handoff-background-drain.mjs",
+      "before": null,
+      "after": "a37c5264d28dbba2204dad4b02fb707b2f3cac0e5af6393f67e61f28e8856900"
+    },
+    {
+      "path": "tests/integration/test-handoff-boot-fallback.mjs",
+      "before": null,
+      "after": "1aa90468b2f47bcd55f6bcc78ffe4aacc4d9421337703f59581f6ff44a759a51"
+    },
+    {
+      "path": "tests/integration/test-handoff-cold-recovery.mjs",
+      "before": null,
+      "after": "b2d5e75720f66113a366aea9e0b506ff4ec06373db822eaa7296b36a2558078f"
+    },
+    {
+      "path": "tests/integration/test-handoff-control.mjs",
+      "before": null,
+      "after": "941fe28f335eb31d8317f1f6f0ba55bb21ba394c5142fc104ffa314a6d487a93"
+    },
+    {
+      "path": "tests/integration/test-handoff-dynamic-groups.mjs",
+      "before": null,
+      "after": "f0d1156bc840243d57b79ec849a6d9fd0f51312293031d5c9ba8f2981646ffaa"
+    },
+    {
+      "path": "tests/integration/test-handoff-health.mjs",
+      "before": null,
+      "after": "67298fa89e4cf0a89597d2f9d29758d880f7f858ad91e84b8948e859a260a212"
+    },
+    {
+      "path": "tests/integration/test-handoff-management.mjs",
+      "before": null,
+      "after": "677b5c04b0515af03dce7ca1fcd8ab741a6b8cf3557a58e69a37c41da1ceb8fb"
+    },
+    {
+      "path": "tests/integration/test-handoff-supervisor.mjs",
+      "before": null,
+      "after": "6155b78b2b0dc759c43365d6fa8a1857df4e6f8705df6d39af298297b09efdf2"
+    },
+    {
+      "path": "tests/integration/test-handoff-worker-mode.mjs",
+      "before": null,
+      "after": "53a3b68b6b3e176389686c8b08bf3bd1ac662c81db46aa0a0d616bd0b8520dfd"
+    },
+    {
+      "path": "tests/integration/test-handoff-write-ownership.mjs",
+      "before": null,
+      "after": "c6c038a70a31374e5552ae463a955fc553473efe28d5c3cc7ec5ee84aee2bbc3"
+    },
+    {
+      "path": "tests/integration/test-release-health.mjs",
+      "before": null,
+      "after": "c1539159d541db9f3c44509be9dc62b9e572a9075a9bdd9b54774cb785240e9f"
+    },
+    {
+      "path": "tests/integration/test-stream-failover-before-output.mjs",
+      "before": "af287b1054b3686b01b97ee5ce63cd17b8e3a2f4cc22b21e88730c373f78b60c",
+      "after": "c62d291001fa090517a4f940f4c4a08b35644f83d0d343f57eea58062b0a0071"
+    },
+    {
+      "path": "tests/manual/test-codex-forced-restart-recovery.sh",
+      "before": "b145b555001fd7394644c44336015b678e1a0615329fa58798e3a821677d7a0f",
+      "after": "684f4959cbde941f0fa26c87998a87ce441c5693a9d5763f9f7f04ed61408f18"
+    },
+    {
+      "path": "tests/manual/test-codex-isolated.mjs",
+      "before": null,
+      "after": "f7e2fe8309e8cb9f749b1f5b09a446e7ff61a28c0f4404182d46c2f365e4aa27"
+    },
+    {
+      "path": "tests/manual/test-codex-pty.py",
+      "before": null,
+      "after": "dd01554c5357f39978b06194ae2004c7a3153470d15634c68cd1c21df08c5fe9"
+    },
+    {
+      "path": "tests/unit/test-handoff-coordinator.mjs",
+      "before": null,
+      "after": "387a1a16183ffa29340eed2e53eee7c2c3b19174eb4da14577026afce42302f1"
+    },
+    {
+      "path": "tests/unit/test-handoff-listener.mjs",
+      "before": null,
+      "after": "3d6b752758280c391c60980f04bd667889bdd3569c1fb9b015d0d48df8fe65a7"
+    },
+    {
+      "path": "tests/unit/test-handoff-queue.mjs",
+      "before": null,
+      "after": "64582a109d29de3e38fe3aaf9e5748d2edcdc6db73a3f84f70170c2a54418fc8"
+    },
+    {
+      "path": "tests/unit/test-payload-diagnostics.mjs",
+      "before": "293514c0404ab84694ffd049a6d452d6fb5fbec6526a72829a3270a91664f8c6",
+      "after": "1e46ef61a1ade04503e34015f1433ce42640aa28a1a519d5b85d4f02f5369fa7"
+    },
+    {
+      "path": "tests/unit/test-release-health.mjs",
+      "before": null,
+      "after": "8ef22702675527f4a448dbfea712a2b26fd8d4e8a07dcde07adc67a825eb2e31"
+    },
+    {
+      "path": "tests/unit/test-shutdown.mjs",
+      "before": "b7e76ffa6b4f2d35642ba459be76f811ffc62df733c1c90bfbf3b9f88b100b23",
+      "after": "ebbe462078903c41121ad26bd4cf9afeb260e7a0d84f29c97da1ba029a571ac0"
+    },
+    {
+      "path": "tests/unit/test-write-lease.mjs",
+      "before": null,
+      "after": "5307b51fd65ccb4810447ca81c5be39dfef7e1cf879d7730f2fd65f127142ff1"
+    }
+  ],
+  "manualActivationPending": true,
+  "completedAt": "2026-10-26T13:24:13.723153+00:00",
+  "productionAfter": {
+    "pid": 59415,
+    "build": {
+      "version": "0.2.12",
+      "releaseId": "0.2.12-20261024",
+      "codeHash": "218e596ea5e3cea1deea047493ce2349b5e63caf581e73867c66f9ef51a5c4b4",
+      "packaged": true
+    },
+    "port": 15720,
+    "groups": [
+      {
+        "id": "default",
+        "listenerStatus": "listening",
+        "actualListener": {
+          "host": "127.0.0.1",
+          "port": 15720
+        }
+      },
+      {
+        "id": "b77c7255-d25c-4414-8152-02d7c98048c3",
+        "listenerStatus": "listening",
+        "actualListener": {
+          "host": "127.0.0.1",
+          "port": 15722
+        }
+      }
+    ]
+  },
+  "postMergeValidation": {
+    "sourceFilesMatched": 5340,
+    "readmeUpdatedSeparately": true,
+    "rootBackendCodeHash": "eface68392992a683c825435e685f967715921807a6d60e8714d074439e714d4",
+    "node18SyntaxChecksPassed": true,
+    "allFourReleasePackagesVerified": true,
+    "archiveChecksumVerified": true,
+    "lastIsolatedCriticalTestsPassed": 5
+  },
+  "backupManifest": "tools/lite-ccswitch/release-backups/pre-rc4-merge-20261026T131946Z.manifest.json"
+}

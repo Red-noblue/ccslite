@@ -1,0 +1,11 @@
+{
+  "archive": "/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/lite-ccswitch-0.2.13-20261027.tar.gz",
+  "bytes": 35958887,
+  "sha256": "7d6a08ff9d06b79e8ec80a84a60f4e15c38938fb212ce21e90058b783cc7393f",
+  "restored": "/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/archive-restore",
+  "releases": [
+    "0.2.13-20261027",
+    "0.2.13-rc.4-20261026"
+  ],
+  "seconds": 296.713
+}

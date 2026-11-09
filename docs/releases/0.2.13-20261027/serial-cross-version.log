@@ -1,0 +1,57 @@
+{"event":"handoff_activated","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+{"event":"handoff_queue_released","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+{"event":"handoff_target_set","worker":"0.2.13-rc.4-20261026","pid":7397}
+{"event":"handoff_current_set","phase":"active","worker":"0.2.13-rc.4-20261026"}
+{"event":"health_monitor_started","intervalMs":5000,"timeoutMs":1000,"failureThreshold":3,"message":"已启动本机服务健康观察，异常仅提示，不中断连接。","releaseId":"0.2.13-rc.4-20261026","pid":7397}
+{"event":"handoff_preparing","phase":"preparing","candidate":"0.2.13-20261027"}
+{"event":"handoff_draining","phase":"draining","oldWorker":"0.2.13-rc.4-20261026","candidate":"0.2.13-20261027"}
+{"event":"handoff_draining","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":1,"queuedBytes":50,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":2,"queuedBytes":100,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":3,"queuedBytes":150,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":4,"queuedBytes":200,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":5,"queuedBytes":250,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":6,"queuedBytes":301,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":7,"queuedBytes":352,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":8,"queuedBytes":403,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":9,"queuedBytes":454,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":10,"queuedBytes":505,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":11,"queuedBytes":555,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":12,"queuedBytes":605,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":13,"queuedBytes":655,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":14,"queuedBytes":705,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":15,"queuedBytes":755,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":16,"queuedBytes":806,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":17,"queuedBytes":857,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":18,"queuedBytes":908,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":19,"queuedBytes":959,"inFlight":0}
+{"event":"handoff_request_queued","queuedRequests":20,"queuedBytes":1010,"inFlight":0}
+{"event":"handoff_activated","queuedRequests":20,"queuedBytes":1010,"inFlight":0}
+{"event":"handoff_queue_released","queuedRequests":20,"queuedBytes":1010,"inFlight":20}
+{"event":"handoff_target_set","worker":"0.2.13-20261027","pid":7407}
+{"event":"handoff_activated","queuedRequests":20,"queuedBytes":1010,"inFlight":20}
+{"event":"handoff_queue_released","queuedRequests":20,"queuedBytes":1010,"inFlight":20}
+{"event":"handoff_activated","phase":"active","worker":"0.2.13-20261027","retiredWorker":"0.2.13-rc.4-20261026"}
+{"event":"health_monitor_started","intervalMs":5000,"timeoutMs":1000,"failureThreshold":3,"message":"已启动本机服务健康观察，异常仅提示，不中断连接。","releaseId":"0.2.13-20261027","pid":7407}
+{"milestone":"waiting_default_observation","observeMs":30000,"intervalMs":5000}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":7407,"healthySince":1793032531007,"consecutiveSuccesses":1,"lastCheckedAt":1793032531007,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":7407,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":7407,"healthySince":1793032531007,"consecutiveSuccesses":2,"lastCheckedAt":1793032536013,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":7407,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":7407,"healthySince":1793032531007,"consecutiveSuccesses":3,"lastCheckedAt":1793032541018,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":7407,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":7407,"healthySince":1793032531007,"consecutiveSuccesses":4,"lastCheckedAt":1793032546025,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":7407,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":7407,"healthySince":1793032531007,"consecutiveSuccesses":5,"lastCheckedAt":1793032551028,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":7407,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":7407,"healthySince":1793032531007,"consecutiveSuccesses":6,"lastCheckedAt":1793032556033,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":7407,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":7407,"healthySince":null,"consecutiveSuccesses":0,"lastCheckedAt":1793032561034,"lastError":"fetch failed"},"worker":{"releaseId":"0.2.13-20261027","pid":7407,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":7407,"healthySince":1793032566041,"consecutiveSuccesses":1,"lastCheckedAt":1793032566041,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":7407,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"milestone":"observation_progress","state":{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":7407,"healthySince":1793032566041,"consecutiveSuccesses":2,"lastCheckedAt":1793032571046,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":7407,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}}
+{"event":"handoff_closed","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+{"event":"handoff_closed","phase":"closed"}
+{"event":"handoff_closed","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+file:///path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/stable-cross-version-drill.mjs:18
+async function until(check, timeoutMs = 10000) { const deadline = Date.now() + timeoutMs; while (Date.now() < deadline) { if (await check()) return; await pause(25); } throw new Error(`最终演练等待超时：${JSON.stringify(supervisor?.state())}`); }
+                                                                                                                                                                              ^
+
+Error: 最终演练等待超时：{"phase":"active","current":"0.2.13-20261027","previous":"0.2.13-rc.4-20261026","operation":null,"leaseFault":null,"health":{"worker":"0.2.13-20261027","pid":7407,"healthySince":1793032566041,"consecutiveSuccesses":2,"lastCheckedAt":1793032571046,"lastError":null},"worker":{"releaseId":"0.2.13-20261027","pid":7407,"root":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-20261027"},"rollbackRoot":"/path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/releases/0.2.13-rc.4-20261026","liveWorkers":2,"journalError":null,"automaticRecoveries":0,"recoveryError":null}
+    at until (file:///path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/stable-cross-version-drill.mjs:18:175)
+    at async file:///path/to/projects/temp/lite-ccswitch-stable-20261027-0jltues5/stable-cross-version-drill.mjs:52:9
+
+Node.js v18.20.8

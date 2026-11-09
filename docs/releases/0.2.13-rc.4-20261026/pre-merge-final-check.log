@@ -1,0 +1,48 @@
+TAP version 13
+# 候选版本启动或激活失败，尝试回退：工作进程提前退出：
+# {"event":"handoff_activated","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+# {"event":"handoff_queue_released","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+# {"event":"handoff_target_set","worker":"good-fallback","pid":67669}
+# {"event":"handoff_current_set","phase":"active","worker":"good-fallback"}
+# {"event":"health_monitor_started","intervalMs":5000,"timeoutMs":1000,"failureThreshold":3,"message":"已启动本机服务健康观察，异常仅提示，不中断连接。","releaseId":"good-fallback","pid":67669}
+# {"event":"handoff_closed","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+# {"event":"handoff_closed","phase":"closed"}
+# {"event":"handoff_closed","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+# Subtest: 固定监听候选启动失败时清理进程并启动回退包
+ok 1 - 固定监听候选启动失败时清理进程并启动回退包
+  ---
+  duration_ms: 9415.817875
+  ...
+# Subtest: 候选预热成功但激活失败时清理候选，回退仍保留历史数据
+ok 2 - 候选预热成功但激活失败时清理候选，回退仍保留历史数据
+  ---
+  duration_ms: 13631.415208
+  ...
+# {"activationFailureFallback":true,"candidateCleaned":true,"configUnchanged":true,"historicalUsageUnchanged":true}
+# Subtest: 旧进程退役后仍可手动回退，崩溃时重新启动回退包并接管队列
+ok 3 - 旧进程退役后仍可手动回退，崩溃时重新启动回退包并接管队列
+  ---
+  duration_ms: 15525.754458
+  ...
+# {"upstreamCalls":5,"usageRecords":5,"coldManualRollback":true,"coldCrashRecovery":true,"elapsedMs":673}
+# Subtest: 回退进程尚未稳定就再次崩溃时停止自动重试，公开端口报告受控故障
+ok 4 - 回退进程尚未稳定就再次崩溃时停止自动重试，公开端口报告受控故障
+  ---
+  duration_ms: 11524.934958
+  ...
+# {"consecutiveCrashes":2,"automaticRecoveries":1,"controlledStatus":503,"processRestartLoopPrevented":true}
+# Subtest: 在线命令保留监听和长 SSE，能够查询、升级并回退
+ok 5 - 在线命令保留监听和长 SSE，能够查询、升级并回退
+  ---
+  duration_ms: 12375.16975
+  ...
+# {"upstreamCalls":5,"usageRecords":5,"onlineUpgrade":true,"onlineRollback":true,"longSsePreserved":true,"controlMode":"0600"}
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 62605.679917

@@ -1,0 +1,441 @@
+TAP version 13
+# Subtest: 合并开关只影响自动路由，关闭项仍可手动使用
+ok 1 - 合并开关只影响自动路由，关闭项仍可手动使用
+  ---
+  duration_ms: 213.040334
+  ...
+# Subtest: 业务连续成功回迁旧会话，按组优先级和模型隔离，并保留响应上下文回退
+ok 2 - 业务连续成功回迁旧会话，按组优先级和模型隔离，并保留响应上下文回退
+  ---
+  duration_ms: 228.573666
+  ...
+# Subtest: 后来启动的分组沿用同一每日周期，复制供应商只检测一次且覆盖独有供应商
+ok 3 - 后来启动的分组沿用同一每日周期，复制供应商只检测一次且覆盖独有供应商
+  ---
+  duration_ms: 4128.742416
+  ...
+# Subtest: 客户端会话供应商会用真实请求上下文完成主动连通性测试
+ok 4 - 客户端会话供应商会用真实请求上下文完成主动连通性测试
+  ---
+  duration_ms: 187.132042
+  ...
+# Subtest: CCOK 主动测试会恢复成功供应商并避开失败供应商
+ok 5 - CCOK 主动测试会恢复成功供应商并避开失败供应商
+  ---
+  duration_ms: 6211.918666
+  ...
+# Subtest: 默认路由按 sortIndex 使用普通供应商，不把 cx 账号当成隐藏路由池
+ok 6 - 默认路由按 sortIndex 使用普通供应商，不把 cx 账号当成隐藏路由池
+  ---
+  duration_ms: 159.809
+  ...
+# Subtest: 优雅重启会等待活动 SSE 收到 response.completed
+ok 7 - 优雅重启会等待活动 SSE 收到 response.completed
+  ---
+  duration_ms: 678.601875
+  ...
+# Subtest: 分组端口真实转发、隔离会话与用量，热更新保留流并统一优雅关闭
+ok 8 - 分组端口真实转发、隔离会话与用量，热更新保留流并统一优雅关闭
+  ---
+  duration_ms: 504.5325
+  ...
+# Subtest: 复制只保留配置，跨组计费、活动与价格数据隔离且重启后保持
+ok 9 - 复制只保留配置，跨组计费、活动与价格数据隔离且重启后保持
+  ---
+  duration_ms: 275.46425
+  ...
+# Subtest: 旧配置迁移为默认分组，复制接口保留全部供应商引用
+ok 10 - 旧配置迁移为默认分组，复制接口保留全部供应商引用
+  ---
+  duration_ms: 149.4555
+  ...
+# Subtest: 迟到的只读准备不会覆盖恢复激活，停止等待后台诊断落盘
+ok 11 - 迟到的只读准备不会覆盖恢复激活，停止等待后台诊断落盘
+  ---
+  duration_ms: 15599.10025
+  ...
+# {"diagnosticRecords":2,"upstreamCalls":11,"latePrepareCancelled":true,"gracefulDiagnosticFlush":true}
+# 候选版本启动或激活失败，尝试回退：工作进程提前退出：
+# {"event":"handoff_activated","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+# {"event":"handoff_queue_released","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+# {"event":"handoff_target_set","worker":"good-fallback","pid":4797}
+# {"event":"handoff_current_set","phase":"active","worker":"good-fallback"}
+# {"event":"health_monitor_started","intervalMs":5000,"timeoutMs":1000,"failureThreshold":3,"message":"已启动本机服务健康观察，异常仅提示，不中断连接。","releaseId":"good-fallback","pid":4797}
+# {"event":"handoff_closed","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+# {"event":"handoff_closed","phase":"closed"}
+# {"event":"handoff_closed","queuedRequests":0,"queuedBytes":0,"inFlight":0}
+# Subtest: 固定监听候选启动失败时清理进程并启动回退包
+ok 12 - 固定监听候选启动失败时清理进程并启动回退包
+  ---
+  duration_ms: 8794.652667
+  ...
+# Subtest: 候选预热成功但激活失败时清理候选，回退仍保留历史数据
+ok 13 - 候选预热成功但激活失败时清理候选，回退仍保留历史数据
+  ---
+  duration_ms: 15261.053834
+  ...
+# {"activationFailureFallback":true,"candidateCleaned":true,"configUnchanged":true,"historicalUsageUnchanged":true}
+# Subtest: 旧进程退役后仍可手动回退，崩溃时重新启动回退包并接管队列
+ok 14 - 旧进程退役后仍可手动回退，崩溃时重新启动回退包并接管队列
+  ---
+  duration_ms: 15700.435583
+  ...
+# {"upstreamCalls":5,"usageRecords":5,"coldManualRollback":true,"coldCrashRecovery":true,"elapsedMs":623}
+# Subtest: 回退进程尚未稳定就再次崩溃时停止自动重试，公开端口报告受控故障
+ok 15 - 回退进程尚未稳定就再次崩溃时停止自动重试，公开端口报告受控故障
+  ---
+  duration_ms: 13570.820458
+  ...
+# {"consecutiveCrashes":2,"automaticRecoveries":1,"controlledStatus":503,"processRestartLoopPrevented":true}
+# Subtest: 在线命令保留监听和长 SSE，能够查询、升级并回退
+ok 16 - 在线命令保留监听和长 SSE，能够查询、升级并回退
+  ---
+  duration_ms: 13671.5515
+  ...
+# {"upstreamCalls":5,"usageRecords":5,"onlineUpgrade":true,"onlineRollback":true,"longSsePreserved":true,"controlMode":"0600"}
+# Subtest: 动态分组端口由固定监听层持有，故障和版本回退保持配置与用量
+ok 17 - 动态分组端口由固定监听层持有，故障和版本回退保持配置与用量
+  ---
+  duration_ms: 12989.605584
+  ...
+# {"newGroup":"811adc1e-9c6c-47cf-b4c9-2eb4f1496a60","clone":"22453a36-f2e3-4184-9de2-2d15c4f07381","sseDuringPortMove":true,"conflictKeptConfig":true,"writeFailureRestored":true,"concurrentSettingsPreserved":true,"crashAfterConfigCommitRecovered":true,"recoveredLateGroup":true,"calls":14,"records":14}
+# Subtest: 健康异常保留回退进程和 SSE，恢复后连续观察才能归档
+ok 18 - 健康异常保留回退进程和 SSE，恢复后连续观察才能归档
+  ---
+  duration_ms: 14465.342458
+  ...
+# {"degradedAction":"observe_only","oldWorkerRetainedWhileUnhealthy":true,"sseCompleted":true,"upstreamCalls":1,"retiredAfterContinuousRecovery":true}
+# Subtest: 真实 Lite 的认证、公开端口与跨版本状态 SSE 保持一致
+ok 19 - 真实 Lite 的认证、公开端口与跨版本状态 SSE 保持一致
+  ---
+  duration_ms: 13279.659583
+  ...
+# {"publicPort":51082,"qualityPort":51083,"statusSseAcrossUpgrade":true,"runtimeTokenPreserved":true,"privateGroupHost":"127.0.0.1","upstreamCalls":2}
+# Subtest: 真实 Lite 工作进程完成版本接管、分组转发和崩溃回退
+ok 20 - 真实 Lite 工作进程完成版本接管、分组转发和崩溃回退
+  ---
+  duration_ms: 13614.598125
+  ...
+# {"publicPort":51133,"qualityPort":51134,"upstreamCalls":6,"usageRecords":6,"recoveredRelease":"handoff-candidate","gracefulSseStop":true}
+# Subtest: 只读预热使用私有端口，激活后才接受业务请求
+ok 21 - 只读预热使用私有端口，激活后才接受业务请求
+  ---
+  duration_ms: 181.418625
+  ...
+# Subtest: 固定监听的写入隔离与租约故障恢复
+    # Subtest: 重复启动被拒绝且不写入当前实例的数据
+    ok 1 - 重复启动被拒绝且不写入当前实例的数据
+      ---
+      duration_ms: 6034.160875
+      ...
+    # Subtest: 续租异常暂停新请求并保留已有 SSE，修复后仅发送一次
+    ok 2 - 续租异常暂停新请求并保留已有 SSE，修复后仅发送一次
+      ---
+      duration_ms: 7076.877917
+      ...
+    # {"ttlCrossed":true,"activeSseCompleted":true,"queuedRequestSentOnce":true,"records":2}
+    # Subtest: 监督器被杀后旧工作进程排空期间禁止接管，退出后安全恢复
+    ok 3 - 监督器被杀后旧工作进程排空期间禁止接管，退出后安全恢复
+      ---
+      duration_ms: 8724.370125
+      ...
+    # {"orphanDrainProtected":true,"recoveryAfterWorkerExit":true,"records":2}
+    1..3
+ok 22 - 固定监听的写入隔离与租约故障恢复
+  ---
+  duration_ms: 25020.349833
+  ...
+# Subtest: OAuth 文件模式会动态读取当前会话并允许主动连通性测试
+ok 23 - OAuth 文件模式会动态读取当前会话并允许主动连通性测试
+  ---
+  duration_ms: 189.011708
+  ...
+# Subtest: 超过 5000 条与损坏半行的历史在请求和重启后保留，汇总不受日志页上限影响
+ok 24 - 超过 5000 条与损坏半行的历史在请求和重启后保留，汇总不受日志页上限影响
+  ---
+  duration_ms: 447.441666
+  ...
+# Subtest: 两个实例共用日志追加不会覆盖彼此记录
+ok 25 - 两个实例共用日志追加不会覆盖彼此记录
+  ---
+  duration_ms: 338.316667
+  ...
+# Subtest: 新实例能发现旧实例排空后追加的历史
+ok 26 - 新实例能发现旧实例排空后追加的历史
+  ---
+  duration_ms: 220.753917
+  ...
+# Subtest: 直接启动和重启脚本读取同一环境文件并保留公网地址和历史路径
+ok 27 - 直接启动和重启脚本读取同一环境文件并保留公网地址和历史路径
+  ---
+  duration_ms: 1295.036542
+  ...
+# Subtest: 公网未配置令牌时，代理与所有管理数据接口均拒绝访问
+ok 28 - 公网未配置令牌时，代理与所有管理数据接口均拒绝访问
+  ---
+  duration_ms: 89.2245
+  ...
+# Subtest: 公网管理 Cookie 与状态流可用，代理令牌不会泄漏到上游
+ok 29 - 公网管理 Cookie 与状态流可用，代理令牌不会泄漏到上游
+  ---
+  duration_ms: 136.460083
+  ...
+# Subtest: 用量写入失败显示错误，已成功请求不会被重试
+ok 30 - 用量写入失败显示错误，已成功请求不会被重试
+  ---
+  duration_ms: 128.46775
+  ...
+# Subtest: 迁移后的旧 response_id 在新供应商不兼容时回退原供应商
+ok 31 - 迁移后的旧 response_id 在新供应商不兼容时回退原供应商
+  ---
+  duration_ms: 179.939334
+  ...
+# Subtest: 价格实验直连指定供应商并等待逐条录入扣费
+ok 32 - 价格实验直连指定供应商并等待逐条录入扣费
+  ---
+  duration_ms: 175.106542
+  ...
+# Subtest: 多供应商流量真实并发、五秒过期推送和各类上游请求统计
+ok 33 - 多供应商流量真实并发、五秒过期推送和各类上游请求统计
+  ---
+  duration_ms: 5276.643959
+  ...
+# Subtest: 精确的供应商差异错误会转移到下一个供应商
+ok 34 - 精确的供应商差异错误会转移到下一个供应商
+  ---
+  duration_ms: 224.385708
+  ...
+# Subtest: 故障转移会把完整供应商尝试链写入单条 usage 记录
+ok 35 - 故障转移会把完整供应商尝试链写入单条 usage 记录
+  ---
+  duration_ms: 313.249333
+  ...
+# Subtest: 明确的模型不支持会临时跳过供应商且不触发断路器
+ok 36 - 明确的模型不支持会临时跳过供应商且不触发断路器
+  ---
+  duration_ms: 195.3055
+  ...
+# Subtest: CCOK 返回降级模型时不会确认请求模型，随后可尝试下一个模型
+ok 37 - CCOK 返回降级模型时不会确认请求模型，随后可尝试下一个模型
+  ---
+  duration_ms: 180.112542
+  ...
+# Subtest: 就绪后启动持续观察，等待期间没有供应商调用
+ok 38 - 就绪后启动持续观察，等待期间没有供应商调用
+  ---
+  duration_ms: 621.085
+  ...
+# {"root":"/var/folders/qs/t8gz5p3d0bn8vdj3bcwnzfvw0000gn/T/lite-release-health-dDVZA1","port":51607,"groupPort":51608,"supervisorPid":6431,"childPid":6443}
+# Subtest: 活动 SSE 期间子进程卡住仅告警，恢复原进程后原流仍完整
+ok 39 - 活动 SSE 期间子进程卡住仅告警，恢复原进程后原流仍完整
+  ---
+  duration_ms: 23628.627625
+  ...
+# {"root":"/var/folders/qs/t8gz5p3d0bn8vdj3bcwnzfvw0000gn/T/lite-release-health-725NdA","port":51621,"groupPort":51622,"supervisorPid":6451,"childPid":6461}
+# {"degraded":{"event":"health_degraded","timestamp":"2026-10-26T16:34:09.808Z","releaseId":"health-candidate","pid":6461,"consecutiveFailures":3,"firstFailureAt":"2026-10-26T16:33:57.804Z","lastError":"本机状态接口检查超时","action":"observe_only","message":"版本服务连续未通过本机健康检查，请检查日志；当前进程与连接已保留。"},"recovered":{"event":"health_recovered","timestamp":"2026-10-26T16:34:14.813Z","releaseId":"health-candidate","pid":6461,"failureCount":3,"durationMs":17009,"message":"版本服务的本机健康检查已恢复。"},"streamCompleted":true}
+# Subtest: 连续失败告警后子进程崩溃，仍只回退一次并观察新进程
+ok 40 - 连续失败告警后子进程崩溃，仍只回退一次并观察新进程
+  ---
+  duration_ms: 18700.074
+  ...
+# {"root":"/var/folders/qs/t8gz5p3d0bn8vdj3bcwnzfvw0000gn/T/lite-release-health-FkegVl","port":51719,"groupPort":51720,"supervisorPid":6599,"childPid":6609}
+# Subtest: 正常排空超过三轮检测仍不告警，活动 SSE 完成后正常退出
+ok 41 - 正常排空超过三轮检测仍不告警，活动 SSE 完成后正常退出
+  ---
+  duration_ms: 17611.418
+  ...
+# {"root":"/var/folders/qs/t8gz5p3d0bn8vdj3bcwnzfvw0000gn/T/lite-release-health-ANi6WU","port":51828,"groupPort":51829,"supervisorPid":6753,"childPid":6763}
+# Subtest: 候选启动失败自动回退，恢复配置且保留失败期间新增的用量
+ok 42 - 候选启动失败自动回退，恢复配置且保留失败期间新增的用量
+  ---
+  duration_ms: 758.942542
+  ...
+# Subtest: 候选就绪后可请求，正常退出不触发回退，旧版本可继续读取新增历史
+ok 43 - 候选就绪后可请求，正常退出不触发回退，旧版本可继续读取新增历史
+  ---
+  duration_ms: 1079.763833
+  ...
+# Subtest: 端口已占用或版本包被修改时拒绝启动，已有服务保持可用
+ok 44 - 端口已占用或版本包被修改时拒绝启动，已有服务保持可用
+  ---
+  duration_ms: 749.995542
+  ...
+# Subtest: 候选意外退出后回退一次，保留就绪后修改的配置与用量
+ok 45 - 候选意外退出后回退一次，保留就绪后修改的配置与用量
+  ---
+  duration_ms: 776.8045
+  ...
+# Subtest: 正常停止等待现有 SSE 完成，不触发回退也不强制断开
+ok 46 - 正常停止等待现有 SSE 完成，不触发回退也不强制断开
+  ---
+  duration_ms: 729.449166
+  ...
+# Subtest: 旧重启入口识别版本监督器，保留活动 SSE 且不触发意外回退
+ok 47 - 旧重启入口识别版本监督器，保留活动 SSE 且不触发意外回退
+  ---
+  duration_ms: 1202.179209
+  ...
+# Subtest: 两个版本都启动失败时停止，不无限重试或覆盖历史
+ok 48 - 两个版本都启动失败时停止，不无限重试或覆盖历史
+  ---
+  duration_ms: 719.582958
+  ...
+# Subtest: 未就绪候选忽略 SIGTERM 时有界清理并回退，正式停止规则不变
+ok 49 - 未就绪候选忽略 SIGTERM 时有界清理并回退，正式停止规则不变
+  ---
+  duration_ms: 4632.212625
+  ...
+# Subtest: 启动中主动停止只发送一次 SIGTERM，不误触发二次强制断开
+ok 50 - 启动中主动停止只发送一次 SIGTERM，不误触发二次强制断开
+  ---
+  duration_ms: 583.022584
+  ...
+# Subtest: 监督器意外退出时现有 SSE 完整排空，子进程退出后可恢复监督与历史
+ok 51 - 监督器意外退出时现有 SSE 完整排空，子进程退出后可恢复监督与历史
+  ---
+  duration_ms: 1480.410625
+  ...
+# Subtest: 同一会话故障后切换，恢复后按价格优先级回到首选供应商
+ok 52 - 同一会话故障后切换，恢复后按价格优先级回到首选供应商
+  ---
+  duration_ms: 696.842667
+  ...
+# Subtest: 生命周期前导阶段断流时切换供应商并只转发成功供应商的流
+ok 53 - 生命周期前导阶段断流时切换供应商并只转发成功供应商的流
+  ---
+  duration_ms: 416.414
+  ...
+# Subtest: 有效输出已发出后断流不会拼接备用供应商响应
+ok 54 - 有效输出已发出后断流不会拼接备用供应商响应
+  ---
+  duration_ms: 248.544416
+  ...
+# Subtest: 输出后静默超时单独统计且不拼接其他供应商
+ok 55 - 输出后静默超时单独统计且不拼接其他供应商
+  ---
+  duration_ms: 3387.737209
+  ...
+# Subtest: 客户端主动断开不计入上游断流
+ok 56 - 客户端主动断开不计入上游断流
+  ---
+  duration_ms: 3134.637291
+  ...
+# Subtest: 管理台人工取消不计入上游断流
+ok 57 - 管理台人工取消不计入上游断流
+  ---
+  duration_ms: 3141.479709
+  ...
+# Subtest: 生命周期事件后持续心跳超时会关闭上游并切换，诊断重启后保留
+ok 58 - 生命周期事件后持续心跳超时会关闭上游并切换，诊断重启后保留
+  ---
+  duration_ms: 429.666375
+  ...
+# Subtest: 未验证前导持续心跳超时会关闭上游并切换，诊断重启后保留
+ok 59 - 未验证前导持续心跳超时会关闭上游并切换，诊断重启后保留
+  ---
+  duration_ms: 423.695
+  ...
+# Subtest: 回退窗口结束后已发送的生命周期流无进展超时，不会拼接备用供应商
+ok 60 - 回退窗口结束后已发送的生命周期流无进展超时，不会拼接备用供应商
+  ---
+  duration_ms: 463.753125
+  ...
+# Subtest: 持续有效输出超过无进展阈值仍可完成，运行中修改只影响后续尝试
+ok 61 - 持续有效输出超过无进展阈值仍可完成，运行中修改只影响后续尝试
+  ---
+  duration_ms: 519.465125
+  ...
+# Subtest: 流式等待配置默认值、零值、部分保存与重启后显示保持一致
+ok 62 - 流式等待配置默认值、零值、部分保存与重启后显示保持一致
+  ---
+  duration_ms: 233.522041
+  ...
+# Subtest: headers 阶段客户端取消立即中止上游，不追加尝试或恢复探测
+ok 63 - headers 阶段客户端取消立即中止上游，不追加尝试或恢复探测
+  ---
+  duration_ms: 173.74525
+  ...
+# Subtest: first-byte 阶段客户端取消立即中止上游，不追加尝试或恢复探测
+ok 64 - first-byte 阶段客户端取消立即中止上游，不追加尝试或恢复探测
+  ---
+  duration_ms: 174.121375
+  ...
+# Subtest: prelude 阶段客户端取消立即中止上游，不追加尝试或恢复探测
+ok 65 - prelude 阶段客户端取消立即中止上游，不追加尝试或恢复探测
+  ---
+  duration_ms: 171.08675
+  ...
+# Subtest: error-body 阶段客户端取消立即中止上游，不追加尝试或恢复探测
+ok 66 - error-body 阶段客户端取消立即中止上游，不追加尝试或恢复探测
+  ---
+  duration_ms: 172.683584
+  ...
+# Subtest: error-body-buffer 阶段客户端取消立即中止上游，不追加尝试或恢复探测
+ok 67 - error-body-buffer 阶段客户端取消立即中止上游，不追加尝试或恢复探测
+  ---
+  duration_ms: 175.409459
+  ...
+# Subtest: buffer 阶段客户端取消立即中止上游，不追加尝试或恢复探测
+ok 68 - buffer 阶段客户端取消立即中止上游，不追加尝试或恢复探测
+  ---
+  duration_ms: 174.294125
+  ...
+# Subtest: 退避等待中的客户端取消会打断定时器，不追加业务重试
+ok 69 - 退避等待中的客户端取消会打断定时器，不追加业务重试
+  ---
+  duration_ms: 173.95275
+  ...
+# Subtest: 管理台取消错误正文读取保留 operator_cancelled 分类且不切换
+ok 70 - 管理台取消错误正文读取保留 operator_cancelled 分类且不切换
+  ---
+  duration_ms: 165.084375
+  ...
+# Subtest: 流式 HTTP 503 错误正文停顿超时，保留原状态的重试语义
+ok 71 - 流式 HTTP 503 错误正文停顿超时，保留原状态的重试语义
+  ---
+  duration_ms: 312.552958
+  ...
+# Subtest: 流式 HTTP 400 错误正文停顿超时，保留原状态的重试语义
+ok 72 - 流式 HTTP 400 错误正文停顿超时，保留原状态的重试语义
+  ---
+  duration_ms: 305.484916
+  ...
+# Subtest: 非流式 HTTP 503 错误正文停顿超时，保留原状态的重试语义
+ok 73 - 非流式 HTTP 503 错误正文停顿超时，保留原状态的重试语义
+  ---
+  duration_ms: 311.764917
+  ...
+# Subtest: 非流式 HTTP 400 错误正文停顿超时，保留原状态的重试语义
+ok 74 - 非流式 HTTP 400 错误正文停顿超时，保留原状态的重试语义
+  ---
+  duration_ms: 309.719083
+  ...
+# Subtest: 错误正文持续滴流也受整段读取时限约束
+ok 75 - 错误正文持续滴流也受整段读取时限约束
+  ---
+  duration_ms: 293.852625
+  ...
+# Subtest: 错误正文超过上限时终止读取，保留有界诊断并切换
+ok 76 - 错误正文超过上限时终止读取，保留有界诊断并切换
+  ---
+  duration_ms: 159.157542
+  ...
+# Subtest: 同一供应商的并发请求中，取消一条不会中断另一条
+ok 77 - 同一供应商的并发请求中，取消一条不会中断另一条
+  ---
+  duration_ms: 344.156666
+  ...
+# Subtest: 上传请求体中途取消不会发出任何上游请求
+ok 78 - 上传请求体中途取消不会发出任何上游请求
+  ---
+  duration_ms: 122.114291
+  ...
+1..78
+# tests 81
+# suites 0
+# pass 81
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 305706.725042

@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "productionChanged": false,
+  "realProviderRequests": false,
+  "publicPort": 64798,
+  "qualityPort": 64799,
+  "requests": 32,
+  "uniqueUpstreamCalls": 32,
+  "usageRecords": 33,
+  "historicalRecords": 1,
+  "mainAndGroupSseCompleted": true,
+  "queuedRequestsSentOnce": 20,
+  "defaultObservationMs": 34988,
+  "coldRecoveryMs": 1154,
+  "configPreservedAfterRollback": true,
+  "packages": [
+    {
+      "releaseId": "0.2.13-rc.4-20261026",
+      "version": "0.2.13-rc.4",
+      "contentHash": "fbf5022bcc8bc6ec8056b8a468bbf853d85dca6f07fa6287b2ce1e55c98ccf27"
+    },
+    {
+      "releaseId": "0.2.12-handoff.1-20261026",
+      "version": "0.2.12-handoff.1",
+      "contentHash": "6c5b60d79c0af1e9cc2deaeab367f4104ac0d4a0a5d01570414d3818fb577eee"
+    }
+  ]
+}

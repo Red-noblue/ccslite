@@ -1,0 +1,30 @@
+# 中文独立发布仓库规则：源码、测试、文档和当前页面保留，本机状态与版本副本不入库。
+
+# 正式运行数据、供应商配置及本机认证
+/data/
+/codex-config/
+/.env
+/.env.*
+!/.env.example
+/runtime.env
+/auth.json
+/credentials.json
+
+# 可重新安装的依赖及本机环境
+node_modules/
+/.venvs/
+
+# 本机候选包、固定回退包和历史备份
+/releases/
+/fallback-releases/
+/release-backups/
+
+# 系统和编辑器临时产物
+.DS_Store
+__MACOSX/
+__pycache__/
+*.py[cod]
+*.tmp
+*.swp
+*.migration-*
+*.before-*

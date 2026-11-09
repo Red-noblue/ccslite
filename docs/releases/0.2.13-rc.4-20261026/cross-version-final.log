@@ -1,0 +1,10 @@
+✔ 真实 Lite 工作进程完成版本接管、分组转发和崩溃回退 (5661.671209ms)
+ℹ {"publicPort":64801,"qualityPort":64802,"upstreamCalls":6,"usageRecords":6,"recoveredRelease":"0.2.12-handoff.1-20261026","gracefulSseStop":true}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5725.098417

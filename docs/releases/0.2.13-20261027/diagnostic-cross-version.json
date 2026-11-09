@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "nodeVersion": "v18.20.8",
+  "productionChanged": false,
+  "realProviderRequests": false,
+  "publicPort": 53097,
+  "qualityPort": 53098,
+  "requests": 32,
+  "uniqueUpstreamCalls": 32,
+  "usageRecords": 33,
+  "historicalRecords": 1,
+  "mainAndGroupSseCompleted": true,
+  "queuedRequestsSentOnce": 20,
+  "defaultObservationMs": 34990,
+  "coldRecoveryMs": 1164,
+  "configPreservedAfterRollback": true,
+  "packages": [
+    {
+      "releaseId": "0.2.13-20261027",
+      "version": "0.2.13",
+      "contentHash": "16d3e4a8c2bf1420e96b93d1129237798e7215ae5df0c62b305b5110b374585c"
+    },
+    {
+      "releaseId": "0.2.13-rc.4-20261026",
+      "version": "0.2.13-rc.4",
+      "contentHash": "fbf5022bcc8bc6ec8056b8a468bbf853d85dca6f07fa6287b2ce1e55c98ccf27"
+    }
+  ]
+}
