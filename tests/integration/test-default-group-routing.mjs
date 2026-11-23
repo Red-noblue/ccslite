@@ -104,4 +104,23 @@ test("默认分组 providerRefs 与实际路由、CCOK 资格保持一致", asyn
   assert.equal(persisted.groups[0].providerRefs.find((ref) => ref.providerId === "disabled").enabled, false);
   assert.equal(persisted.providers.find((provider) => provider.id === "disabled").routingEnabled, false);
   assert.equal(persisted.providers.find((provider) => provider.id === "disabled").enabled, false);
+  const createdResponse = await fetch(`${base}/api/providers`, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name: "新增 P2", baseUrl: `http://127.0.0.1:${enabledPort}`, apiKey: "mock-only", sortIndex: 2 }),
+  });
+  assert.equal(createdResponse.status, 201);
+  const added = await createdResponse.json();
+  assert.equal(added.sortIndex, 2, "不能被已有两条引用的队列末尾 P3 覆盖");
+  const addedStatus = await (await fetch(`${base}/api/status`)).json();
+  assert.ok(addedStatus.statusRevision > status.statusRevision);
+  assert.equal(addedStatus.providers.find((item) => item.id === added.id).sortIndex, 2);
+  const afterAdd = JSON.parse(await readFile(path.join(root, "config.json"), "utf8"));
+  assert.equal(afterAdd.groups[0].providerRefs.find((ref) => ref.providerId === added.id).sortIndex, 2);
+  const deleted = await fetch(`${base}/api/providers/${added.id}`, { method: "DELETE" });
+  assert.equal(deleted.status, 200); await deleted.text();
+  const afterDelete = await (await fetch(`${base}/api/status`)).json();
+  assert.ok(afterDelete.statusRevision > addedStatus.statusRevision);
+  assert.ok(afterDelete.providers.every((item) => item.id !== added.id));
+  assert.ok(afterDelete.groups.every((group) => !group.providerRefs.some((ref) => ref.providerId === added.id)));
+
 });

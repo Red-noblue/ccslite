@@ -135,19 +135,23 @@ test("upgrade-session 命令按会话逐步交接并保留旧会话请求", { ti
   t.diagnostic(JSON.stringify({ command: "upgrade-session", records: records.length, oldSessionCompleted: true, newSessionStartedOnCandidate: true, migratedSessionContinued: true }));
 });
 
-test("会话旧版本退役后，控制命令可以再次升级", { timeout: 120000 }, async (t) => {
+test("会话旧版本排空后可以继续升级，即使当前版本仍在输出", { timeout: 120000 }, async (t) => {
   const root = await mkdtemp(path.join(os.tmpdir(), "lite-handoff-session-reupgrade-"));
   const data = path.join(root, "data"); await mkdir(data);
   const candidate = path.join(root, "candidate"); const fallback = path.join(root, "fallback");
   await createReleaseSnapshot(ROOT, candidate, "session-reupgrade-old"); await createReleaseSnapshot(ROOT, fallback, "session-reupgrade-new");
-  let release = () => {};
+  const third = path.join(root, "third");
+  await createReleaseSnapshot(ROOT, third, "session-reupgrade-third");
+  const heldStreams = new Map();
   const upstream = createServer(async (req, res) => {
     const chunks = []; for await (const chunk of req) chunks.push(chunk);
     const payload = JSON.parse(Buffer.concat(chunks).toString() || "{}");
-    if (payload.input === "hold") {
+    if (payload.stream) {
       res.writeHead(200, { "content-type": "text/event-stream" });
       res.write('event: response.output_text.delta\ndata: {"type":"response.output_text.delta","delta":"开始"}\n\n');
-      release = () => { if (!res.destroyed) res.end('event: response.completed\ndata: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":1,"output_tokens":1}}}\n\n'); };
+      heldStreams.set(payload.input, () => {
+        if (!res.destroyed) res.end('event: response.completed\ndata: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":1,"output_tokens":1}}}\n\n');
+      });
       return;
     }
     res.writeHead(200, { "content-type": "application/json" }); res.end('{"status":"completed","usage":{"input_tokens":1,"output_tokens":1}}');
@@ -159,23 +163,32 @@ test("会话旧版本退役后，控制命令可以再次升级", { timeout: 120
   await writeFile(path.join(data, "usage.jsonl"), "");
   let supervisor; let control;
   t.after(async () => {
-    release(); await control?.close(); await supervisor?.close(); upstream.closeAllConnections(); await new Promise((resolve) => upstream.close(resolve)); await rm(root, { recursive: true, force: true });
+    for (const finish of heldStreams.values()) finish();
+    await control?.close(); await supervisor?.close(); upstream.closeAllConnections(); await new Promise((resolve) => upstream.close(resolve)); await rm(root, { recursive: true, force: true });
   });
   supervisor = await createHandoffSupervisor({ candidate, fallback, dataDir: data, publicPort, observeMs: 0,
     healthPolicy: { intervalMs: 20, timeoutMs: 100, failureThreshold: 2 }, log: () => {} });
   await supervisor.start(); control = await createHandoffControl({ dataDir: data, supervisor });
-  const request = (input) => fetch(`http://127.0.0.1:${publicPort}/v1/responses`, { method: "POST",
-    headers: { "content-type": "application/json", "x-codex-session-id": "reupgrade-session" }, body: JSON.stringify({ model: "fake", input, stream: input === "hold" }) });
+  const request = (session, stream = true) => fetch(`http://127.0.0.1:${publicPort}/v1/responses`, { method: "POST",
+    headers: { "content-type": "application/json", "x-codex-session-id": session }, body: JSON.stringify({ model: "fake", input: session, stream }) });
 
-  const held = await request("hold"); assert.equal(held.status, 200); const heldText = held.text();
+  const held = await request("A"); assert.equal(held.status, 200); const heldText = held.text();
   const first = await requestHandoffControl(data, { action: "upgrade-session", candidate: fallback });
   assert.equal(first.ok, true); assert.equal(first.worker, "session-reupgrade-new");
   await until(() => supervisor.state().phase === "active_parallel");
-  release(); assert.match(await heldText, /response.completed/);
-  await until(() => supervisor.state().phase === "active" && supervisor.state().previous === null && supervisor.state().session?.legacySessionCount === 0, 20_000);
+  const currentStream = await request("B"); assert.equal(currentStream.status, 200);
+  const currentText = currentStream.text();
+  assert.equal(supervisor.state().session.legacySessionCount, 1);
+  heldStreams.get("A")(); assert.match(await heldText, /response.completed/);
+  await until(() => supervisor.state().phase === "active" && supervisor.state().liveWorkers === 1, 4000);
+  assert.equal(supervisor.state().session.inFlightSessions, 1);
 
-  const second = await requestHandoffControl(data, { action: "upgrade-session", candidate });
-  assert.equal(second.ok, true); assert.equal(second.worker, "session-reupgrade-old");
+  const second = await requestHandoffControl(data, { action: "upgrade-session", candidate: third });
+  assert.equal(second.ok, true); assert.equal(second.worker, "session-reupgrade-third");
   assert.equal(supervisor.state().phase, "active_parallel");
+  assert.equal(supervisor.state().session.legacySessionCount, 1);
+  const newRequest = await request("C", false); assert.equal(newRequest.status, 200); await newRequest.text();
+  heldStreams.get("B")(); assert.match(await currentText, /response.completed/);
+  await until(() => supervisor.state().phase === "active" && supervisor.state().liveWorkers === 1);
   t.diagnostic(JSON.stringify({ firstUpgrade: first.worker, retiredPhase: "active", secondUpgrade: second.worker, controlSocket: true }));
 });

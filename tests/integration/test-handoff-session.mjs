@@ -99,6 +99,6 @@ test("两个并行会话可以逐步交接，旧会话下一次请求进入新�
     return lines.length === 5 ? lines : false;
   });
   assert.equal(finalRecords.length, 5);
-  t.diagnostic(JSON.stringify({ mode: supervisor.listener.sessionState().mode, records: finalRecords.length, current: supervisor.current().id, rollback: true }));
+  t.diagnostic(JSON.stringify({ scenario: "session_upgrade", simulated: true, mode: supervisor.listener.sessionState().mode, records: finalRecords.length, current: supervisor.current().id, rollback: true, oldStreamCompleted: true, nextRequestMigrated: true }));
 });
 

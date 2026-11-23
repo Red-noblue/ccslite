@@ -6,6 +6,13 @@
  * 首包探测策略，但移除 Tauri 托盘、桌面接管和本机配置改写能力。
  */
 
+import { runProviderDevelopment } from "./lib/provider-development.js";
+import { createCompatibilityReports, compatibilityFingerprint, compatibilityFingerprintFromHeaders } from "./lib/compatibility-reports.js";
+import { createRecoveryEvidence } from "./lib/recovery-evidence.js";
+import { buildRequestEvidence } from "./lib/request-evidence.js";
+import { createCompatibilityMetadata, exportCompatibilityReport } from "./lib/compatibility-report-format.js";
+import { runProviderCompatibility } from "./lib/provider-compatibility.js";
+import { captureRouteSnapshot } from "./lib/route-diagnostics.js";
 import { createRoutingRecovery } from "./lib/routing-recovery.js";
 import { createUsageQueries } from "./lib/usage-queries.js";
 import { createConfigTransactions } from "./lib/config-transactions.js";
@@ -111,7 +118,7 @@ import {
 import { createRuntimeConfig } from "./lib/runtime-config.js";
 import { readBuildInfo } from "./lib/build-info.js";
 import { createProviderActivity } from "./lib/provider-activity.js";
-import { createRequestLifecycleRegistry } from "./lib/request-lifecycle.js";
+import { createRequestLifecycleRegistry, readCodexSessionId } from "./lib/request-lifecycle.js";
 import { createGroupStatistics, usageGroupId } from "./lib/group-usage.js";
 import { createGroupListeners } from "./lib/group-listeners.js";
 import { providersForGroup, groupProxy, connectivityTargets } from "./lib/group-routing.js";
@@ -309,9 +316,11 @@ function getGroupStickyRouting(groupId = "default") {
 let groupListeners = null;
 // 记录本进程内“同模型连续业务或探测成功”的供应商。它不是供应商实体或计费类别，
 // 只用于让恢复事件早于下一次业务成功时，仍能在后续请求中兑现价格优先策略。
-const { reconcileCompletedStickyProvider, markConfirmedRecovery, clearConfirmedRecovery, isRecoveryConfirmed, migrateStickyToRecoveredProvider } = createRoutingRecovery({
+const recoveryEvidence = createRecoveryEvidence(DATA_DIR);
+const { reconcileCompletedStickyProvider, markConfirmedRecovery, clearConfirmedRecovery, isRecoveryConfirmed, migrateStickyToRecoveredProvider, getRecoveryEvidence } = createRoutingRecovery({
   getConfig: () => config, getStores: () => groupStickyStores, getRecoveryProbeManager: () => recoveryProbeManager,
   selectProviders, isProviderInAutoRouting, enqueueMigratedResponse,
+  onRecoveryEvent: (event) => recoveryEvidence.record(event),
 });
 // 覆盖从读取请求体到写完响应的完整生命周期，包含尚未收到上游首包的请求。
 const activeRequests = new Set();
@@ -385,6 +394,7 @@ function flushResponseContexts() {
 
 let usageRefreshQueue = Promise.resolve();
 const priceLabs = new Map();
+const compatibilityReports = createCompatibilityReports(DATA_DIR);
 const exchangeRates = createExchangeRateService({ filePath: path.join(DATA_DIR, "exchange-rate.json") });
 function getGroupPriceLab(groupId) {
   if (!priceLabs.has(groupId)) {
@@ -416,6 +426,7 @@ let connectivityScheduler = null;
 let recoveryProbeManager = null;
 const recoveryProbeGroups = new Map();
 const clientSessionContexts = createClientSessionContextStore();
+const compatibilityChecks = new Set();
 const payloadDiagnostics = createPayloadDiagnostics({
   logPath: PAYLOAD_DIAGNOSTICS_PATH,
   runDiagnostic: run413Diagnostic,
@@ -526,6 +537,7 @@ async function flushBackgroundWrites() {
     await new Promise((resolve) => setTimeout(resolve, 25));
   }
   await payloadDiagnostics.flush();
+  await recoveryEvidence.flush();
   await usageWriteQueue;
   await handoffPendingUsageQueue;
   await configTransactions.flush();
@@ -601,7 +613,7 @@ async function startBackgroundSchedulers() {
     onFailed: (provider, result) => clearConfirmedRecovery(provider, result?.model),
     onRecovered: async (provider, result) => {
       getBreaker(provider).recordProbeSuccess();
-      markConfirmedRecovery(provider, result?.model);
+      markConfirmedRecovery(provider, result?.model, { source: result?.source, successCount: 2, requestId: result?.requestId || "" });
       // 业务成功沿用业务路径保存模型证据，避免提前重复落盘打乱用量记录顺序。
       // 恢复探测需在此刷新证据，否则临时不支持缓存仍会阻止回迁。
       if (result?.source !== "business") await commitProviderEvidence(provider.id, result?.model,
@@ -855,6 +867,18 @@ async function handleAdminApi(req, res, url) {
     return;
   }
 
+  if (method === "GET" && parts.length === 5 && parts[0] === "api" && parts[1] === "billing" && parts[2] === "logs" && parts[4] === "evidence") {
+    const record = usageState.records.find((item) => item.id === parts[3] && usageGroupId(item) === groupId);
+    if (!record) throw nonRetryableError("请求日志不存在", 404);
+    sendJson(res, 200, await buildRequestEvidence(record, { compatibilityReports, recoveryEvidence }));
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/api/routing/recovery-events") {
+    sendJson(res, 200, await recoveryEvidence.list(groupId, { day: url.searchParams.get("day") || undefined, page: url.searchParams.get("page") }));
+    return;
+  }
+
   if (method === "GET" && url.pathname === "/api/billing/trend") {
     sendJson(res, 200, usageQueries.trend(Object.fromEntries(url.searchParams)));
     return;
@@ -992,7 +1016,7 @@ async function handleAdminApi(req, res, url) {
         defaultGroup.providerRefs.push({
           providerId: provider.id,
           enabled: true,
-          sortIndex: defaultGroup.providerRefs.length + 1,
+          sortIndex: groupId === "default" ? provider.sortIndex : defaultGroup.providerRefs.length + 1,
         });
         defaultGroup.updatedAt = new Date().toISOString();
       }
@@ -1001,6 +1025,7 @@ async function handleAdminApi(req, res, url) {
         draft.proxy.currentProviderId = provider.id;
       }
     });
+    publishRuntimeStatusUpdate();
     sendJson(res, 201, { ...sanitizeProvider(provider), ...getGroupProviderRouting(provider, groupId) });
     return;
   }
@@ -1041,6 +1066,7 @@ async function handleAdminApi(req, res, url) {
         }
       });
       clearConfirmedRecovery(providerId);
+      publishRuntimeStatusUpdate();
       sendJson(res, 200, { ...sanitizeProvider(findProvider(providerId)), ...getGroupProviderRouting(findProvider(providerId), groupId) });
       return;
     }
@@ -1058,6 +1084,7 @@ async function handleAdminApi(req, res, url) {
       clearConfirmedRecovery(providerId);
       breakers.delete(providerId);
       for (const store of groupStickyStores.values()) store.forgetProvider(providerId);
+      publishRuntimeStatusUpdate();
       sendJson(res, 200, { ok: true });
       return;
     }
@@ -1079,6 +1106,71 @@ async function handleAdminApi(req, res, url) {
       });
       setCurrentProvider(findProvider(providerId), "manual_select");
       sendJson(res, 200, sanitizeConfig(config, groupId));
+      return;
+    }
+
+    if (method === "GET" && parts[3] === "compatibility" && parts[4] === "reports" && ([5, 6].includes(parts.length) || parts.length === 7 && parts[6] === "export")) {
+      const fingerprint = await compatibilityFingerprint(provider, clientSessionContexts.get(provider));
+      if (parts.length >= 6) {
+        const report = await compatibilityReports.read(groupId, providerId, parts[5]);
+        if (!report) throw nonRetryableError("检查报告不存在", 404);
+        const current = { ...report, stale: report.configFingerprint !== fingerprint };
+        if (parts.length === 7) {
+          res.setHeader("Content-Disposition", 'attachment; filename="ccslite-readiness-report.json"');
+          res.setHeader("Cache-Control", "no-store");
+          sendJson(res, 200, exportCompatibilityReport(current));
+        } else sendJson(res, 200, current);
+      } else {
+        const history = await compatibilityReports.list(groupId, providerId, { page: url.searchParams.get("page"), pageSize: url.searchParams.get("pageSize") });
+        sendJson(res, 200, { ...history, reports: history.reports.map((report) => ({ ...report, stale: report.configFingerprint !== fingerprint })) });
+      }
+      return;
+    }
+
+    if (method === "POST" && parts[3] === "compatibility" && parts.length === 4) {
+      const payload = await readJsonBody(req);
+      const model = typeof payload.model === "string" ? payload.model.trim() : "";
+      if (!model || model.length > 160) throw nonRetryableError("请输入有效的检查模型（最多 160 字符）", 400);
+      const mode = payload.mode ?? "basic";
+      if (!["basic", "development"].includes(mode)) throw nonRetryableError("检查模式必须是 basic 或 development", 400);
+      const checkedProvider = structuredClone(provider);
+      const sessionContext = clientSessionContexts.get(provider);
+      const configFingerprint = await compatibilityFingerprint(checkedProvider, sessionContext);
+      if (!provider.baseUrl || provider.authMode === "api_key" && !provider.apiKey || provider.authMode === "client_session" && !sessionContext) {
+        throw nonRetryableError("供应商缺少接口或认证；客户端会话模式需先有真实客户端请求", 400);
+      }
+      if (compatibilityChecks.has(provider.id)) throw nonRetryableError("该供应商已有兼容性检查进行中", 409);
+      const controller = new AbortController();
+      const cancel = () => { if (!res.writableEnded) controller.abort(); };
+      res.once("close", cancel);
+      compatibilityChecks.add(provider.id);
+      try {
+        const startedAt = Date.now();
+        const usage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+        const result = await (mode === "development" ? runProviderDevelopment : runProviderCompatibility)({
+          provider: checkedProvider, model, sessionContext, signal: controller.signal,
+          startActivity: () => providerActivity.start(provider, "diagnostic", groupId),
+          onUsage: async (sample) => {
+            const parsed = extractUsage(sample.responseBody, sample.responseText);
+            for (const key of Object.keys(usage)) usage[key] += Number(parsed[key] || 0);
+            await recordUsage({
+              ...sample, provider: checkedProvider, groupId, requestModel: model,
+              endpoint: `/v1/responses#compatibility-${sample.step}`,
+              usageCategory: "compatibility_probe", routeReason: "manual_compatibility",
+              failureClass: sample.error ? "compatibility_check" : "",
+            });
+          },
+        });
+        let report = { ...result, ...createCompatibilityMetadata(mode, { ccsliteVersion: BUILD_INFO.version, nodeVersion: process.version, platform: process.platform, arch: process.arch }),
+          mode, groupId, configFingerprint, usage, latencyMs: Date.now() - startedAt,
+          budget: result.budget || { maxRequests: 5, requestTimeoutMs: 30000, maxOutputTokens: 256, maxResponseBytes: 512 * 1024 },
+          outcome: controller.signal.aborted ? "cancelled" : result.outcome || (result.results.every((item) => item.outcome === "passed") ? "passed" : "failed") };
+        try { report = await compatibilityReports.save(report); }
+        catch { report = { ...report, saved: false, saveError: "报告未保存，请检查数据目录权限和剩余空间；无需重复检测" }; }
+        if (!res.destroyed) sendJson(res, 200, report);
+      } finally {
+        controller.abort(); res.removeListener("close", cancel); compatibilityChecks.delete(provider.id);
+      }
       return;
     }
 
@@ -1126,6 +1218,7 @@ async function handleProxyRequest(req, res, url, requestId, groupId = "default")
   metrics.totalRequests += 1;
   metrics.lastRequestAt = new Date().toISOString();
   const requestStartedAt = Date.now();
+  const codexSessionId = readCodexSessionId(req.headers);
   let requestModel = null;
   let selectedProvider = null;
   let finalStatusCode = 0;
@@ -1135,6 +1228,7 @@ async function handleProxyRequest(req, res, url, requestId, groupId = "default")
   let routingContext = null;
   const handoffSessionKey = String(req.headers["x-lite-handoff-session-key"] || "");
   let routeReason = "preferred";
+  let routeSnapshot = null;
   const providerAttempts = [];
   const requestCancellation = new AbortController();
   let upstreamController = null;
@@ -1186,6 +1280,13 @@ async function handleProxyRequest(req, res, url, requestId, groupId = "default")
       : stickyRouting.get(routingContext?.key);
     const stickyBefore = stickyBeforeEntry?.providerId || "";
     const providers = selectProviders(requestModel, route.routeKey, routingContext, groupId);
+    routeSnapshot = captureRouteSnapshot({
+      providers: providersForGroup(config, groupId), selected: providers, proxy,
+      routeKey: route.routeKey, routedProviderId: ROUTED_PROVIDER_IDS[route.routeKey],
+      model: requestModel, context: routingContext, stickyProviderId: stickyBefore,
+      circuitState: (id) => breakers.get(id)?.stats().state || "closed",
+      recovery: getRecoveryEvidence(providers[0], requestModel, groupId),
+    });
     if (routingContext?.previousProviderId) routeReason = "previous_response";
     else if (stickyBeforeEntry?.migratedAt && providers[0]?.id === stickyBefore) routeReason = "recovered_migration";
     else if (stickyBefore && providers[0]?.id === stickyBefore) routeReason = "sticky";
@@ -1292,8 +1393,10 @@ async function handleProxyRequest(req, res, url, requestId, groupId = "default")
       setCurrentProvider(provider, "proxy_attempt");
 
       let finishActivity;
+      let attemptConfigFingerprint = "";
       const lifecycle = requestLifecycle.start({
         requestId,
+        codexSessionId,
         attempt: state.attempts,
         groupId,
         providerId: provider.id,
@@ -1306,9 +1409,10 @@ async function handleProxyRequest(req, res, url, requestId, groupId = "default")
         clientPort: req.socket?.remotePort,
       });
       try {
-        const result = await forwardToProvider(req, url, body, provider, ({ controller, targetUrl }) => {
+        const result = await forwardToProvider(req, url, body, provider, ({ controller, targetUrl, headers }) => {
           upstreamController = controller;
           checkClientCancellation();
+          try { attemptConfigFingerprint = compatibilityFingerprintFromHeaders(provider, headers); } catch { /* 诊断摘要失败不影响真实转发。 */ }
           finishActivity = providerActivity.start(provider, "business", groupId);
           lifecycle.setAbort(() => controller.abort());
           lifecycle.update({
@@ -1332,10 +1436,12 @@ async function handleProxyRequest(req, res, url, requestId, groupId = "default")
             endpoint: normalizeProxyPath(url.pathname),
             providerAttempts,
             routeReason,
+            routeSnapshot,
             requestId,
             attemptStartedAt,
             providerAttempt: state.attempts,
             circuitStateBefore,
+            configFingerprint: attemptConfigFingerprint,
             usedHalfOpenPermit: permit.usedHalfOpenPermit,
             lifecycle,
             onSuccess: async (responseIds) => {
@@ -1347,8 +1453,9 @@ async function handleProxyRequest(req, res, url, requestId, groupId = "default")
                 requestModel,
                 routeKey: route.routeKey,
                 groupId,
+                requestId,
               });
-              try { await recoveryProbeManager?.recordSuccess(findProvider(provider.id) || provider, requestModel, { source: "business", status: finalStatusCode }); }
+              try { await recoveryProbeManager?.recordSuccess(findProvider(provider.id) || provider, requestModel, { source: "business", status: finalStatusCode, requestId }); }
               catch (error) { console.error(`恢复确认同步失败，保留现有连接：${error.message}`); }
               if (HANDOFF_WORKER && handoffSessionKey) {
                 try {
@@ -1475,6 +1582,7 @@ async function handleProxyRequest(req, res, url, requestId, groupId = "default")
           }
           state.nextEligibleAt = Math.max(state.nextEligibleAt, Date.now() + (hasNextAttempt ? retryDelayMs : 0));
           appendProviderAttempt(providerAttempts, provider, {
+            configFingerprint: attemptConfigFingerprint,
             startedAtMs: attemptStartedAt,
             statusCode: error.status || 502,
             outcome: "failure",
@@ -1505,6 +1613,7 @@ async function handleProxyRequest(req, res, url, requestId, groupId = "default")
         recordDeferredCircuitFailures(providerStates);
         breaker.releaseHalfOpenPermit(permit.usedHalfOpenPermit);
         appendProviderAttempt(providerAttempts, provider, {
+          configFingerprint: attemptConfigFingerprint,
           startedAtMs: attemptStartedAt,
           statusCode: error.status || 502,
           outcome: "failure",
@@ -1574,11 +1683,13 @@ async function handleProxyRequest(req, res, url, requestId, groupId = "default")
         requestModel,
         statusCode: finalStatusCode || 502,
         latencyMs: Date.now() - requestStartedAt,
+        requestStartedAt: new Date(requestStartedAt).toISOString(),
         isStreaming: requestWasStreaming,
         error: finalError,
         failureClass: finalFailureClass,
         providerAttempts,
         routeReason,
+        routeSnapshot,
         requestId,
       });
     } finally {
@@ -1616,7 +1727,7 @@ async function forwardToProvider(clientReq, url, originalBody, provider, onUpstr
   let headerTimer = setTimeout(() => controller.abort(), headerTimeout);
   let response;
   try {
-    onUpstreamRequest({ controller, targetUrl, isStreaming });
+    onUpstreamRequest({ controller, targetUrl, isStreaming, headers });
     response = await fetch(targetUrl, {
       method: clientReq.method,
       headers,
@@ -1765,6 +1876,7 @@ async function writeProviderResponse(res, result, clientReq, provider, usageCont
     // 在完整响应结束时确认恢复，不能等日志落盘后才让旧成功覆盖后来的失败。
     await usageContext.onSuccess?.(extractResponseIds(result.body, null));
     appendProviderAttempt(usageContext.providerAttempts, provider, {
+      configFingerprint: usageContext.configFingerprint,
       startedAtMs: usageContext.attemptStartedAt,
       statusCode: result.status,
       outcome: "success",
@@ -1780,6 +1892,8 @@ async function writeProviderResponse(res, result, clientReq, provider, usageCont
       requestModel: usageContext.requestModel,
       requestId: usageContext.requestId,
       routeReason: usageContext.routeReason,
+      routeSnapshot: usageContext.routeSnapshot,
+      requestStartedAt: new Date(usageContext.startedAt).toISOString(),
       upstreamRequestId: result.headers.get("x-request-id") || result.headers.get("request-id") || "",
       statusCode: result.status,
       latencyMs: Date.now() - usageContext.startedAt,
@@ -1825,6 +1939,7 @@ async function writeProviderResponse(res, result, clientReq, provider, usageCont
   await usageContext.onSuccess?.(extractResponseIds(null, streamText));
   const attemptUsage = extractUsage(null, streamText);
   appendProviderAttempt(usageContext.providerAttempts, provider, {
+    configFingerprint: usageContext.configFingerprint,
     startedAtMs: usageContext.attemptStartedAt,
     statusCode: result.status,
     outcome: "success",
@@ -1841,6 +1956,8 @@ async function writeProviderResponse(res, result, clientReq, provider, usageCont
     requestModel: usageContext.requestModel,
     requestId: usageContext.requestId,
     routeReason: usageContext.routeReason,
+    routeSnapshot: usageContext.routeSnapshot,
+    requestStartedAt: new Date(usageContext.startedAt).toISOString(),
     upstreamRequestId: result.headers.get("x-request-id") || result.headers.get("request-id") || "",
     statusCode: result.status,
     latencyMs: Date.now() - usageContext.startedAt,
@@ -1971,6 +2088,7 @@ function buildStatusPayload() {
     resources: buildResourcePayload(),
     stickyRouting: [...groupStickyStores.values()].map((store) => store.stats()).reduce((total, stats) => ({ entries: total.entries + stats.entries, responseAliases: total.responseAliases + stats.responseAliases }), { entries: 0, responseAliases: 0 }),
     recoveryProbes: recoveryProbeManager?.status() || [],
+    routingEvidence: recoveryEvidence.state(),
     diagnostics413: payloadDiagnostics.status(),
     persistence: {
       configPath: CONFIG_PATH,
@@ -2260,6 +2378,7 @@ async function recordUsage(input) {
     id: crypto.randomUUID(),
     groupId: input.groupId || "default",
     timestamp: new Date().toISOString(),
+    requestStartedAt: input.requestStartedAt || null,
     providerId: input.provider?.id || null,
     providerName: input.provider?.name || "未选择",
     endpoint: input.endpoint || "",
@@ -2284,6 +2403,7 @@ async function recordUsage(input) {
     error: input.error || "",
     failureClass: String(input.failureClass || ""),
     routeReason: String(input.routeReason || ""),
+    routeSnapshot: input.routeSnapshot || null,
     usageCategory: String(input.usageCategory || ""),
     probeSource: String(input.probeSource || ""),
     targetProviderId: input.targetProviderId || null,
@@ -3479,6 +3599,7 @@ async function testProviderWithModel(provider, requestModel, startedAt, options 
           status: response.status,
           latencyMs,
           model: requestModel,
+        transport: isCodexSessionProbe ? "sse" : "json",
           message,
         };
       }
@@ -3490,6 +3611,7 @@ async function testProviderWithModel(provider, requestModel, startedAt, options 
           status: response.status,
           latencyMs,
           model: requestModel,
+          transport: isCodexSessionProbe ? "sse" : "json",
           message,
         };
       }
@@ -3498,6 +3620,7 @@ async function testProviderWithModel(provider, requestModel, startedAt, options 
         status: response.status,
         latencyMs,
         model: requestModel,
+        transport: isCodexSessionProbe ? "sse" : "json",
         message,
       };
     }
@@ -3539,6 +3662,7 @@ async function testProviderWithModel(provider, requestModel, startedAt, options 
       status: response.status,
       latencyMs,
       model: requestModel,
+      transport: isCodexSessionProbe ? "sse" : "json",
       responseModel: responseModel || requestModel,
       failureClass: modelMismatch ? "model_unsupported" : ok ? "" : "provider_test_mismatch",
       answer: truncateText(answer, 200),
@@ -3567,6 +3691,7 @@ async function testProviderWithModel(provider, requestModel, startedAt, options 
       status: authSourceUnavailable ? Number(error.status || 503) : 0,
       latencyMs: Date.now() - startedAt,
       model: requestModel,
+      transport: isCodexSessionProbe ? "sse" : "json",
       message,
     };
   } finally {

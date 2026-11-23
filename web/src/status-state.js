@@ -28,6 +28,7 @@ export function mergeStatus(current, next) {
     activeRequests: current.activeRequests,
     streamDiagnostics: current.streamDiagnostics,
     groups: current.groups,
+    providers: current.providers,
     statusRevision: current.statusRevision,
   };
 }

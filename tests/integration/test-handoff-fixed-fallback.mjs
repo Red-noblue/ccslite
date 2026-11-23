@@ -140,5 +140,5 @@ test("配置保存与升级重叠时不丢修改，固定备份接管后多个�
   assert.equal(calls, 6); assert.equal(new Set(finalRows.map((row) => row.id)).size, 6);
   const finalConfig = JSON.parse(await readFile(path.join(data, "config.json"), "utf8"));
   assert.equal(finalConfig.proxy.preferredProviderMaxAttempts, 19); assert.equal(finalConfig.proxy.providerMaxAttempts, 3); assert.equal(finalConfig.proxy.maxAttempts, 28);
-  t.diagnostic(JSON.stringify({ fixedFallback: true, delayedConfigPreserved: true, queuedConfigPreserved: true, queuedGroupPreserved: true, completedStreams: 3, crossVersionRoundtrip: true, crashRecovery: true, usageRecords: finalRows.length, replayedRequests: calls - finalRows.length }));
+  t.diagnostic(JSON.stringify({ scenario: "fixed_fallback", simulated: true, fixedFallback: true, delayedConfigPreserved: true, queuedConfigPreserved: true, queuedGroupPreserved: true, completedStreams: 3, crossVersionRoundtrip: true, crashRecovery: true, usageRecords: finalRows.length, replayedRequests: calls - finalRows.length }));
 });

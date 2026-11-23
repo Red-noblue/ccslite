@@ -77,9 +77,9 @@ test("多供应商流量真实并发、五秒过期推送和各类上游请求�
     await rm(root, { recursive: true, force: true });
   });
   const status = async () => fetch(`${base}/api/status`).then((r) => r.json());
-  const post = (url, body = {}) => fetch(`${base}${url}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const post = (url, body = {}, headers = {}) => fetch(`${base}${url}`, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
   const select = (id) => post(`/api/providers/${id}/select`);
-  const request = () => post("/v1/responses", { model: "activity-test", input: "test", stream: true });
+  const request = (headers) => post("/v1/responses", { model: "activity-test", input: "test", stream: true }, headers);
   const finish = (entry) => {
     if (entry.body.stream) entry.res.end('data: {"type":"response.completed","response":{"status":"completed"}}\n\n');
     else entry.res.end(JSON.stringify({ model: "activity-test", output: [{ content: [{ type: "output_text", text: "CCOK" }] }] }));
@@ -89,10 +89,19 @@ test("多供应商流量真实并发、五秒过期推送和各类上游请求�
   await select("b");
   assert.deepEqual((await status()).providerActivity.providers, [], "手动选择不应制造流量");
   await select("a");
-  const a1 = await request();
-  const a2 = await request();
+  const firstId = "019b0000-1111-7222-8333-444444444444";
+  const secondId = "019b0000-2222-7333-8444-555555555555";
+  const codex = { originator: "codex_cli_rs", "session-id": "019b0000-3333-7444-8555-666666666666" };
+  const a1 = await request({ ...codex, "thread-id": firstId, "x-request-id": "request-first" });
+  const a2 = await request({ ...codex, "thread-id": secondId, "x-request-id": "request-second" });
   await select("b");
-  const b = await request();
+  const b = await request({ "x-request-id": firstId, "session-id": firstId, "x-lite-handoff-session-key": firstId });
+  const snapshot = await status();
+  const sessionByRequest = new Map(snapshot.activeRequests.requests.map((item) => [item.requestId, item.codexSessionId]));
+  assert.equal(sessionByRequest.get("request-first"), firstId);
+  assert.equal(sessionByRequest.get("request-second"), secondId);
+  assert.equal(sessionByRequest.get(firstId), null, "请求 ID、缓存和交接键不能冒充 Codex 会话 ID");
+  assert.equal(snapshot.groups.find((group) => group.id === "default").activeRequests.requests.length, 3);
   const active = (await status()).providerActivity;
   assert.equal(active.windowMs, 5000);
   assert.deepEqual(active.providers.map((p) => [p.providerId, p.activeRequests]), [["a", 2], ["b", 1]]);
@@ -113,7 +122,11 @@ test("多供应商流量真实并发、五秒过期推送和各类上游请求�
           const frame = buffer.slice(0, boundary); buffer = buffer.slice(boundary + 2);
           const data = frame.split("\n").find((line) => line.startsWith("data: "));
           if (data) {
-            const providers = JSON.parse(data.slice(6)).providerActivity.providers;
+            const snapshot = JSON.parse(data.slice(6));
+            const providers = snapshot.providerActivity.providers;
+            for (const request of snapshot.activeRequests.requests) {
+              if (request.requestId === "request-second") assert.equal(request.codexSessionId, secondId);
+            }
             if (!providers.some((p) => p.providerId === "a") && providers.some((p) => p.providerId === "b" && p.activeRequests === 1)) sawExpiry = true;
           }
         }

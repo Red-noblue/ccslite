@@ -2,16 +2,18 @@
  * Lite CC Switch React 管理台主入口。
  * 采用 ccswitch 的 React/Vite 前端体系，改为通过服务器 HTTP API 管理本机代理。
  */
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Activity,
+  AlertCircle,
   BarChart3,
   CheckCircle2,
   ChevronDown,
   Cpu,
   Clock3,
   GitBranch,
+  Info,
   Loader2,
   Lock,
   MemoryStick,
@@ -70,7 +72,35 @@ const SETTINGS_SECTIONS = [
 ];
 
 const THEME_CACHE_KEY = "lite-ccswitch-last-theme";
-const SELECTED_GROUP_CACHE_KEY = "lite-ccswitch-selected-group";
+const USAGE_SECTIONS = ["stats", "experiment", "calibration"];
+const SETTINGS_HOME = SETTINGS_SECTIONS[0][0];
+
+// 页面、分组和可直达的子页统一从地址恢复，分组使用稳定 ID。
+function readRoute(hash) {
+  const [page, query] = hash.slice(1).split("?", 2);
+  const params = new URLSearchParams(query);
+  const view = ["settings", "billing", "add"].includes(page) ? page : "providers";
+  const section = params.get("section");
+  return {
+    view,
+    groupId: params.get("group") || "default",
+    section: view === "settings" ? SETTINGS_SECTIONS.find(([id]) => id === section)?.[0] || SETTINGS_HOME
+      : view === "billing" ? USAGE_SECTIONS.find((id) => id === section) || "stats" : null,
+    providerId: view === "billing" ? params.get("provider") : null,
+  };
+}
+
+function routeHash({ view, groupId, section, providerId }) {
+  const params = new URLSearchParams();
+  if (groupId !== "default") params.set("group", groupId);
+  if (view === "settings" && section && section !== SETTINGS_HOME) params.set("section", section);
+  if (view === "billing") {
+    if (section && section !== "stats") params.set("section", section);
+    if (providerId) params.set("provider", providerId);
+  }
+  const query = params.toString();
+  return `#${view}${query ? `?${query}` : ""}`;
+}
 
 function groupListenerLabel(group) {
   return group?.actualListener
@@ -104,7 +134,9 @@ function bootstrapCachedTheme() {
 if (typeof window !== "undefined" && typeof document !== "undefined") bootstrapCachedTheme();
 
 function App() {
-  const [activeView, setActiveView] = useState(() => window.location.hash === "#settings" ? "settings" : "providers");
+  const [hash, setHash] = useState(() => window.location.hash);
+  const route = useMemo(() => readRoute(hash), [hash]);
+  const { view: activeView, groupId: selectedGroupId } = route;
   const [status, setStatus] = useState(null);
   const [billing, setBilling] = useState(null);
   const [pricing, setPricing] = useState([{ model: "*", inputPerMillion: 0, outputPerMillion: 0, cacheReadPerMillion: 0, cacheCreationPerMillion: 0 }]);
@@ -116,24 +148,17 @@ function App() {
   const [providerSearch, setProviderSearch] = useState("");
   const [groupSearch, setGroupSearch] = useState("");
   const [groupSearchOpen, setGroupSearchOpen] = useState(false);
-  const [activeSettingsSection, setActiveSettingsSection] = useState(SETTINGS_SECTIONS[0][0]);
+  const [activeSettingsSection, setActiveSettingsSection] = useState(SETTINGS_HOME);
   const [settingsFlashSection, setSettingsFlashSection] = useState(null);
   const settingsScrollLockRef = useRef(null);
   const [providerTestResults, setProviderTestResults] = useState({});
-  const [usageProviderFilter, setUsageProviderFilter] = useState(null);
-  const [usageSection, setUsageSection] = useState("stats");
   const [events, setEvents] = useState(["等待状态..."]);
+  const [notifications, setNotifications] = useState([]);
+  const notificationId = useRef(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [connectivitySaving, setConnectivitySaving] = useState(false);
   const [diagnostics413, setDiagnostics413] = useState(null);
-  const [selectedGroupId, setSelectedGroupId] = useState(() => {
-    try {
-      return window.localStorage.getItem(SELECTED_GROUP_CACHE_KEY) || "default";
-    } catch {
-      return "default";
-    }
-  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [groupSettingsDraft, setGroupSettingsDraft] = useState(null);
   const [groupSettingsSaving, setGroupSettingsSaving] = useState(false);
@@ -146,7 +171,23 @@ function App() {
   const statusRef = useRef(status); statusRef.current = status;
   const statusStreamReady = useRef(false);
   const refreshController = useRef(null);
+  const groupReady = selectedGroupId === "default" || Boolean(status?.groups?.some((group) => group.id === selectedGroupId));
 
+  useEffect(() => {
+    const readLocation = () => setHash(window.location.hash);
+    window.addEventListener("popstate", readLocation);
+    window.addEventListener("hashchange", readLocation);
+    return () => {
+      window.removeEventListener("popstate", readLocation);
+      window.removeEventListener("hashchange", readLocation);
+    };
+  }, []);
+
+  function navigate(view, groupId = selectedGroupId, { section, providerId } = {}) {
+    const next = routeHash({ view, groupId, section, providerId });
+    if (window.location.hash !== next) window.history.pushState(null, "", next);
+    setHash(next);
+  }
 
   function applyStatus(nextStatus) {
     setStatus((current) => mergeStatus(current, nextStatus));
@@ -165,26 +206,27 @@ function App() {
     try {
       if (!silent) setLoading(true);
       const [nextStatus, nextBilling, nextDiagnostics413] = await Promise.all([
-        !silent || !statusStreamReady.current || !statusRef.current ? read("/api/status") : Promise.resolve(statusRef.current),
-        activeViewRef.current === "providers" ? read(`/api/billing/summary?timezoneOffset=${new Date().getTimezoneOffset()}&groupId=${encodeURIComponent(requestGroupId)}`) : null,
+        !silent || !statusStreamReady.current || !statusRef.current ? read("/api/status") : null,
+        activeViewRef.current === "providers" && groupReady ? read(`/api/billing/summary?timezoneOffset=${new Date().getTimezoneOffset()}&groupId=${encodeURIComponent(requestGroupId)}`) : null,
         activeViewRef.current === "settings" ? read("/api/diagnostics/413") : null,
       ]);
       if (controller.signal.aborted || selectedGroupRef.current !== requestGroupId) return;
-      applyStatus(nextStatus);
+      if (nextStatus) applyStatus(nextStatus);
+      const effectiveStatus = nextStatus || statusRef.current;
       if (nextBilling) setBilling(nextBilling.groupId === requestGroupId || (requestGroupId === "default" && !nextBilling.groupId)
         ? { ...nextBilling, scopeGroupId: requestGroupId } : null);
       if (nextDiagnostics413) setDiagnostics413(nextDiagnostics413);
-      setProxyDraft((current) => current || cloneProxy(nextStatus.proxy));
+      setProxyDraft((current) => current || cloneProxy(effectiveStatus.proxy));
       setUiThemeDraft((current) => current || {
-        palette: nextStatus.ui?.palette || "ocean",
-        groupThemeEnabled: nextStatus.ui?.groupThemeEnabled !== false,
+        palette: effectiveStatus.ui?.palette || "ocean",
+        groupThemeEnabled: effectiveStatus.ui?.groupThemeEnabled !== false,
       });
-      setConnectivityDraft((current) => current || cloneConnectivityTest(nextStatus.connectivityTest));
-      setCandidateModelsDraft((current) => current ?? (nextStatus.connectivityTest?.candidateModels || []).join(", "));
+      setConnectivityDraft((current) => current || cloneConnectivityTest(effectiveStatus.connectivityTest));
+      setCandidateModelsDraft((current) => current ?? (effectiveStatus.connectivityTest?.candidateModels || []).join(", "));
       setPricing((current) => current.length && current.some((row) => row.model) ? current : pricingToRows(nextBilling?.pricing?.pricing || {}));
       if (!silent) pushEvent("状态已刷新");
     } catch (error) {
-      if (error.name !== "AbortError") pushEvent(`刷新失败: ${error.message}`);
+      if (error.name !== "AbortError") pushEvent(`刷新失败: ${error.message}`, "error", !silent);
     } finally {
       if (refreshController.current === controller) setLoading(false);
     }
@@ -201,7 +243,7 @@ function App() {
     const visible = () => { if (!document.hidden) tick(); };
     document.addEventListener("visibilitychange", visible);
     return () => { clearInterval(timer); refreshController.current?.abort(); document.removeEventListener("visibilitychange", visible); };
-  }, [selectedGroupId, activeView]);
+  }, [selectedGroupId, activeView, groupReady]);
 
   useEffect(() => {
     const stream = new EventSource("/api/status/events");
@@ -236,6 +278,7 @@ function App() {
   const providers = useMemo(() => {
     return providersForGroupView(sharedProviders, selectedGroup);
   }, [sharedProviders, selectedGroup]);
+  const usageProviderFilter = route.providerId ? providers.find((provider) => provider.id === route.providerId) || null : null;
   const groupIsolationReady = Boolean(selectedGroup?.statistics);
   const groupRoutingReady = Boolean(selectedGroup?.proxy);
   const groupApi = useCallback(async (url, options) => {
@@ -261,18 +304,16 @@ function App() {
   );
 
   useEffect(() => {
-    if (groups.length && !groups.some((group) => group.id === selectedGroupId)) {
-      setSelectedGroupId(groups[0].id);
+    const next = routeHash({
+      ...route,
+      groupId: groups.length && !groupReady ? "default" : selectedGroupId,
+      providerId: Array.isArray(status?.providers) && !usageProviderFilter ? null : route.providerId,
+    });
+    if (hash === window.location.hash && hash !== next) {
+      window.history.replaceState(null, "", next);
+      setHash(next);
     }
-  }, [groups, selectedGroupId]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(SELECTED_GROUP_CACHE_KEY, selectedGroup?.id || "default");
-    } catch {
-      // 浏览器禁用本地存储时不影响分组切换。
-    }
-  }, [selectedGroup?.id, status?.ui?.palette]);
+  }, [hash, route, groups.length, groupReady, selectedGroupId, status?.providers, usageProviderFilter]);
 
   useEffect(() => {
     if (!selectedGroup) return;
@@ -335,9 +376,22 @@ function App() {
     return map;
   }, [groupBilling]);
 
-  function pushEvent(message) {
+  function notify(message, tone = "info") {
+    const id = ++notificationId.current;
+    setNotifications((items) => [...items, { id, message, tone }].slice(-4));
+  }
+
+  const dismissNotification = useCallback((id) => {
+    setNotifications((items) => items.filter((item) => item.id !== id));
+  }, []);
+
+  function pushEvent(message, requestedTone, showToast = true) {
     const line = `[${new Date().toLocaleTimeString("zh-CN", { hour12: false })}] ${message}`;
     setEvents((items) => [line, ...items.filter((item) => item !== "等待状态...")].slice(0, 80));
+    if (showToast && message !== "状态已刷新") {
+      const tone = requestedTone || (/失败|错误|未通过/.test(message) ? "error" : /已添加|已更新|已删除|完成|已保存|已复制|已新建|已取消/.test(message) ? "success" : "info");
+      notify(message, tone);
+    }
   }
 
   async function saveProxy() {
@@ -376,6 +430,12 @@ function App() {
     }
   }
 
+  // 写入后读取服务端状态，独立于按时轮询，避免请求被定时刷新取消。
+  async function refreshProviderStatus() {
+    try { applyStatus(await api("/api/status")); }
+    catch (error) { pushEvent(`配置已提交，读取最新列表失败：${error.message}`, "error"); }
+  }
+
   async function addProvider(event) {
     event.preventDefault();
     setSaving(true);
@@ -388,8 +448,8 @@ function App() {
           routingEnabled: true,
         }),
       });
-      setProviderForm({ ...initialProviderForm, sortIndex: providers.length + 2 });
-      await refresh(true);
+      setProviderForm(initialProviderForm);
+      await refreshProviderStatus();
       pushEvent(`已添加供应商: ${providerForm.name}`);
     } catch (error) {
       pushEvent(`添加供应商失败: ${error.message}`);
@@ -404,7 +464,7 @@ function App() {
         method: "PUT",
         body: JSON.stringify(patch),
       });
-      await refresh(true);
+      await refreshProviderStatus();
       pushEvent(`供应商已更新: ${provider.name}`);
       return true;
     } catch (error) {
@@ -460,9 +520,8 @@ function App() {
           }),
       });
       setGroupCreateDraft({ name: "", description: "", port: "" });
-      await refresh(true);
-      setSelectedGroupId(created.id);
-      setActiveView("providers");
+      await refreshProviderStatus();
+      navigate("providers", created.id);
       pushEvent(`${clone ? "已复制分组" : "已新建分组"}：${created.name}`);
     } catch (error) {
       pushEvent(`${clone ? "复制" : "新建"}分组失败: ${error.message}`);
@@ -477,24 +536,29 @@ function App() {
 
   async function providerAction(provider, action) {
     const testKey = `${selectedGroupId}:${provider.id}`;
-    if (action === "delete" && !window.confirm(`确认删除供应商 ${provider.name}？`)) return;
+    if (action === "delete" && !window.confirm(`确认从所有分组删除供应商 ${provider.name}？`)) return;
     if (action === "test") {
+      const transport = ["oauth_file", "client_session"].includes(provider.authMode) ? "sse" : "json";
+      const transportMessage = transport === "json"
+        ? "连通性检测使用 JSON 非流式响应，与正常对话的 SSE 不同；请用编码兼容性检查单独验证流式协议。"
+        : "连通性检测使用 SSE 流式响应。";
       setProviderTestResults((items) => ({
         ...items,
         [testKey]: {
           state: "pending",
-          message: "正在等待模型回答...",
+          message: `正在等待模型回答。${transportMessage}`,
+          transport,
           startedAt: new Date().toISOString(),
         },
       }));
-      pushEvent(`开始检测: ${provider.name}，等待模型回答...`);
+      pushEvent(`开始检测: ${provider.name}。${transportMessage}`, "info");
     }
     try {
       const path = action === "delete"
         ? `/api/providers/${encodeURIComponent(provider.id)}`
         : `/api/providers/${encodeURIComponent(provider.id)}/${action}`;
       const result = await groupApi(path, { method: action === "delete" ? "DELETE" : "POST" });
-      await refresh(true);
+      await refreshProviderStatus();
       if (action === "test") {
         const message = result.message || (result.ok ? "模型回答正常" : "检测失败");
         setProviderTestResults((items) => ({
@@ -504,6 +568,7 @@ function App() {
             ok: Boolean(result.ok),
             status: result.status,
             model: result.model,
+            transport: result.transport || "unknown",
             answer: result.answer,
             message,
             latencyMs: result.latencyMs,
@@ -513,9 +578,9 @@ function App() {
             updatedAt: new Date().toISOString(),
           },
         }));
-        pushEvent(`测试完成: ${provider.name} ${result.ok ? "正常" : "失败"}，${message}${result.routingMessage ? `；${result.routingMessage}` : ""}，延迟 ${result.latencyMs}ms`);
+        pushEvent(`测试完成: ${provider.name} ${result.ok ? "正常" : "失败"}，${message}${result.routingMessage ? `；${result.routingMessage}` : ""}；${result.transport === "json" ? "JSON 非流式" : result.transport === "sse" ? "SSE 流式" : "传输方式未知"}，延迟 ${result.latencyMs}ms`, result.ok ? "success" : "error");
       } else {
-        pushEvent(`供应商操作完成: ${provider.name}`);
+        pushEvent(action === "delete" ? `已删除供应商: ${provider.name}` : `供应商操作完成: ${provider.name}`, "success");
       }
     } catch (error) {
       if (action === "test") {
@@ -636,18 +701,14 @@ function App() {
   }
 
   function openUsageDashboard(provider, section = "stats") {
-    setUsageProviderFilter(provider ? { id: provider.id, name: provider.name } : null);
-    setUsageSection(section);
-    setActiveView("billing");
-  }
-
-  function openSettingsView() {
-    window.history.replaceState(null, "", "#settings");
-    setActiveSettingsSection(SETTINGS_SECTIONS[0][0]);
-    setActiveView("settings");
+    navigate("billing", selectedGroupId, { section, providerId: provider?.id });
   }
 
   function scrollSettingsSection(sectionId) {
+    const target = document.getElementById(sectionId);
+    if (!target) return;
+    const details = target.closest("details");
+    if (details) details.open = true;
     setActiveSettingsSection(sectionId);
     settingsScrollLockRef.current = sectionId;
     window.setTimeout(() => {
@@ -655,12 +716,19 @@ function App() {
     }, 1400);
     setSettingsFlashSection(sectionId);
     window.setTimeout(() => setSettingsFlashSection((current) => current === sectionId ? null : current), 1100);
-    document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function settingsSectionClass(sectionId) {
     return `settings-anchor ${settingsFlashSection === sectionId ? "settings-anchor-flash" : ""}`;
   }
+
+  const settingsReady = Boolean(selectedGroup) && (route.section !== "settings-connectivity" || Boolean(proxyDraft));
+  useEffect(() => {
+    if (activeView !== "settings" || !settingsReady) return undefined;
+    const frame = window.requestAnimationFrame(() => scrollSettingsSection(route.section));
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeView, selectedGroupId, route.section, settingsReady]);
 
   useEffect(() => {
     if (activeView !== "settings") return undefined;
@@ -677,16 +745,16 @@ function App() {
     };
     root.addEventListener("scroll", updateActiveSection, { passive: true });
     return () => root.removeEventListener("scroll", updateActiveSection);
-  }, [activeView]);
+  }, [activeView, selectedGroupId, settingsReady]);
 
   return (
     <main className="cc-app">
       <header className="cc-header">
         <div className="header-left">
-          <a className="brand-title" href="#providers" onClick={() => setActiveView("providers")}>
-            CCS Lite
+          <a className="brand-title" href={routeHash({ view: "providers", groupId: selectedGroupId })}>
+            CC Switch
           </a>
-          <button className="icon-button" title="设置与分组管理" onClick={openSettingsView}>
+          <button className="icon-button" title="设置与分组管理" onClick={() => navigate("settings")}>
             <Settings size={17} />
           </button>
           <button className="icon-button" title="使用统计" onClick={() => openUsageDashboard(null)}>
@@ -701,7 +769,10 @@ function App() {
               type="button"
               key={id}
               aria-current={activeSettingsSection === id ? "location" : undefined}
-              onClick={() => scrollSettingsSection(id)}
+              onClick={() => {
+                if (route.section === id) scrollSettingsSection(id);
+                else navigate("settings", selectedGroupId, { section: id });
+              }}
             >
               {label}
             </button>
@@ -743,10 +814,11 @@ function App() {
             {filteredGroups.map((group) => {
               const index = groups.findIndex((item) => item.id === group.id);
               return (
-              <button
+              <a
                 className={`group-sidebar-button ${selectedGroup?.id === group.id ? "active" : ""}`}
                 key={group.id}
-                type="button"
+                href={routeHash({ view: "providers", groupId: group.id })}
+                aria-current={activeView === "providers" && selectedGroupId === group.id ? "page" : undefined}
                 style={{
                   "--group-accent": paletteForGroup(group, index, status?.ui?.palette || "ocean").accent,
                   "--group-accent-hover": paletteForGroup(group, index, status?.ui?.palette || "ocean").hover,
@@ -754,14 +826,10 @@ function App() {
                   "--group-accent-shadow": paletteForGroup(group, index, status?.ui?.palette || "ocean").shadow,
                 }}
                 title={`${index + 1}. ${group.name} · ${groupListenerLabel(group)} · ${group.activeProviderCount ?? group.providerRefs?.length ?? 0} 个供应商${group.description ? ` · ${group.description}` : ""}`}
-                onClick={() => {
-                  setSelectedGroupId(group.id);
-                  setActiveView("providers");
-                }}
               >
                 <span className="group-sidebar-number">{index + 1}</span>
                 <span className="group-sidebar-name">{group.name}</span>
-              </button>
+              </a>
               );
             })}
             {groupSearchOpen && (
@@ -817,18 +885,39 @@ function App() {
                   <span>{selectedGroupProviderIds.size} 个供应商</span>
                 </p>
               </div>
-              <button className="button" onClick={() => setActiveView("add")}>
+              <button className="button" onClick={() => navigate("add")}>
                 <Plus size={16} />
                 添加供应商
               </button>
             </section>
 
             <section className="metric-grid compact">
-              <Metric icon={<Server size={18} />} label="总请求" value={formatNumber(groupStatistics?.totalRequests)} />
-              <Metric icon={<CheckCircle2 size={18} />} label="成功率" value={`${Number(groupStatistics?.successRate || 0).toFixed(1)}%`} />
-              <Metric icon={<GitBranch size={18} />} label="故障转移" value={formatNumber(groupStatistics?.failoverCount)} />
+              <div className="metric-card-group">
+                <Metric icon={<Server size={18} />} label="总请求" value={formatNumber(groupStatistics?.totalRequests)} />
+                <Metric icon={<CheckCircle2 size={18} />} label="成功率" value={`${Number(groupStatistics?.successRate || 0).toFixed(1)}%`} />
+                <Metric icon={<GitBranch size={18} />} label="故障转移" value={formatNumber(groupStatistics?.failoverCount)} />
+                <Metric
+                  icon={<Cpu size={18} />}
+                  label="主服务 CPU"
+                  value={`${Number(status?.resources?.cpuPercent || 0).toFixed(1)}%`}
+                  detail={status?.resources?.cpuSampleWindowSeconds
+                    ? `整机约 ${Number(status.resources.cpuPercentOfSystem || 0).toFixed(1)}% · ${status.resources.cpuParallelism || "-"} 核`
+                    : `正在采样 · ${status?.resources?.cpuParallelism || "-"} 核`}
+                />
+                <Metric icon={<MemoryStick size={18} />} label="主服务 RSS 内存" value={formatMb(status?.resources?.memory?.rssMb)} />
+                <Metric
+                  icon={<MemoryStick size={18} />}
+                  label="主服务堆内存"
+                  value={`${formatMb(status?.resources?.memory?.heapUsedMb, false)} / ${formatMb(status?.resources?.memory?.heapTotalMb, false)} MB`}
+                />
+                <Metric icon={<Server size={18} />} label="主服务 PID" value={status?.resources?.pid || "-"} />
+                <Metric icon={<Clock3 size={18} />} label="主服务运行时间" value={formatUptime(status?.uptimeSeconds)} />
+              </div>
               <article className="metric-card provider-activity-card">
-                <span><Shield size={18} />当前使用供应商</span>
+                <div className="provider-activity-heading">
+                  <span><Shield size={18} />当前使用供应商</span>
+                  {streamDiagnostics && <StreamDiagnostics stats={streamDiagnostics} />}
+                </div>
                 {groupActivity ? (
                   groupActivity.providers.length ? (
                     <div className="provider-activity-list">
@@ -845,42 +934,7 @@ function App() {
                 <small>{groupActivity
                   ? `本组请求进行中或结束后 ${groupActivity.windowMs / 1000} 秒内 · 含检测`
                   : "需新版后端提供实时流量统计"}</small>
-                {streamDiagnostics && (
-                  <details className="provider-activity-diagnostics">
-                    <summary>流式诊断</summary>
-                    <span>
-                      输出前切换 {formatNumber(streamDiagnostics.preOutputFailovers)} · 输出后断流 {formatNumber(streamDiagnostics.midStreamDisconnects)}
-                    </span>
-                    <span>
-                      传输错误 {formatNumber(streamDiagnostics.transportErrors)} · 客户端断开 {formatNumber(streamDiagnostics.clientDisconnects)}
-                    </span>
-                    <span title="按供应商尝试统计，静默超时可能同时计入输出后断流和传输错误，不应将各项相加作为总请求数">
-                      输出前失败 {formatNumber(streamDiagnostics.preOutputFailures)} · 静默超时 {formatNumber(streamDiagnostics.idleTimeouts)}
-                    </span>
-                    <span>无进展超时 {formatNumber(streamDiagnostics.progressTimeouts)}</span>
-                    <span>
-                      首字节平均 {streamDiagnostics.firstByteAverageMs == null ? "暂无" : `${Math.round(streamDiagnostics.firstByteAverageMs)}ms`}
-                      {streamDiagnostics.latestLastChunkAt ? ` · 最近数据 ${formatDateTime(streamDiagnostics.latestLastChunkAt)}` : ""}
-                    </span>
-                  </details>
-                )}
               </article>
-              <Metric
-                icon={<Cpu size={18} />}
-                label="主服务 CPU"
-                value={`${Number(status?.resources?.cpuPercent || 0).toFixed(1)}%`}
-                detail={status?.resources?.cpuSampleWindowSeconds
-                  ? `整机约 ${Number(status.resources.cpuPercentOfSystem || 0).toFixed(1)}% · ${status.resources.cpuParallelism || "-"} 核`
-                  : `正在采样 · ${status?.resources?.cpuParallelism || "-"} 核`}
-              />
-              <Metric icon={<MemoryStick size={18} />} label="主服务 RSS 内存" value={formatMb(status?.resources?.memory?.rssMb)} />
-              <Metric
-                icon={<MemoryStick size={18} />}
-                label="主服务堆内存"
-                value={`${formatMb(status?.resources?.memory?.heapUsedMb, false)} / ${formatMb(status?.resources?.memory?.heapTotalMb, false)} MB`}
-              />
-              <Metric icon={<Server size={18} />} label="主服务 PID" value={status?.resources?.pid || "-"} />
-              <Metric icon={<Clock3 size={18} />} label="主服务运行时间" value={formatUptime(status?.uptimeSeconds)} />
             </section>
 
             <section className="provider-list-toolbar">
@@ -917,6 +971,7 @@ function App() {
                   testStatus={providerTestResults[`${selectedGroupId}:${provider.id}`]}
                   onUpdate={updateProvider}
                   onLoadDetails={loadProviderDetails}
+                  apiClient={groupApi}
                   onAction={providerAction}
                   onConfigureUsage={() => openUsageDashboard(provider)}
                   onOpenPriceLab={() => openUsageDashboard(provider, "experiment")}
@@ -928,7 +983,7 @@ function App() {
                   title="还没有供应商"
                   description="添加 ht、k1、k2 或新的 Codex 中转站后，本地代理才能开始转发请求。"
                   action="添加供应商"
-                  onAction={() => setActiveView("add")}
+                  onAction={() => navigate("add")}
                 />
               )}
               {providers.length > 0 && !filteredProviders.length && (
@@ -1192,7 +1247,7 @@ function App() {
                   className={`group-management-item ${selectedGroup?.id === group.id ? "active" : ""}`}
                   type="button"
                   key={group.id}
-                  onClick={() => setSelectedGroupId(group.id)}
+                  onClick={() => navigate("settings", group.id, { section: route.section })}
                 >
                   <span className="group-management-number">{index + 1}</span>
                   <span className="group-management-copy">
@@ -1237,20 +1292,21 @@ function App() {
           </section>
         )}
 
-        {activeView === "billing" && (
+        {activeView === "billing" && groupReady && (
           <UsageDashboard
             key={selectedGroup?.id}
             groupId={selectedGroup?.id}
             billing={groupBilling}
             providers={providers}
             providerFilter={usageProviderFilter}
-            onProviderFilterChange={setUsageProviderFilter}
+            onProviderFilterChange={(provider) => openUsageDashboard(provider, route.section)}
             pricing={pricing}
             setPricing={setPricing}
             onSavePricing={savePricing}
             onRefresh={() => refresh()}
             apiClient={groupApi}
-            initialSection={usageSection}
+            activeSection={route.section}
+            onSectionChange={(section) => openUsageDashboard(usageProviderFilter, section)}
           />
         )}
 
@@ -1261,7 +1317,87 @@ function App() {
         </ViewScroll>
         </section>
       </div>
+      <div className="notification-stack" aria-label="操作通知" aria-live="polite">
+        {notifications.map((item) => <NotificationToast key={item.id} item={item} onDismiss={dismissNotification} />)}
+      </div>
     </main>
+  );
+}
+
+function NotificationToast({ item, onDismiss }) {
+  useEffect(() => {
+    const timer = window.setTimeout(() => onDismiss(item.id), 6500);
+    return () => window.clearTimeout(timer);
+  }, [item.id, onDismiss]);
+  const Icon = item.tone === "success" ? CheckCircle2 : item.tone === "error" ? AlertCircle : Activity;
+  return <div className={`notification-toast ${item.tone}`} role={item.tone === "error" ? "alert" : "status"}>
+    <Icon size={18} aria-hidden="true" />
+    <p>{item.message}</p>
+    <button type="button" aria-label="关闭通知" title="关闭通知" onClick={() => onDismiss(item.id)}><X size={15} /></button>
+  </div>;
+}
+
+// 活动供应商是实时状态，流式诊断是本分组已记录的上游尝试。
+function StreamDiagnostics({ stats }) {
+  const panelId = useId();
+  const firstByte = stats.firstByteAverageMs;
+  const firstByteText = firstByte == null ? "暂无记录" : firstByte < 1000
+    ? `${Math.round(firstByte)} 毫秒`
+    : `${(firstByte / 1000).toFixed(1)} 秒`;
+  const lastChunk = new Date(stats.latestLastChunkAt || NaN);
+  const lastChunkText = Number.isFinite(lastChunk.getTime())
+    ? `${lastChunk.getFullYear()} 年 ${lastChunk.getMonth() + 1} 月 ${lastChunk.getDate()} 日 ${lastChunk.getHours()} 时 ${lastChunk.getMinutes()} 分 ${lastChunk.getSeconds()} 秒`
+    : "";
+  const outcomes = [
+    ["回复前失败，后来成功", stats.preOutputFailovers],
+    ["回复前失败，未恢复", stats.preOutputFailures],
+    ["回复已开始，中途失败", stats.midStreamDisconnects],
+  ];
+  const causes = [
+    ["上游传输错误", stats.transportErrors, "连接供应商或读取响应时发生错误。"],
+    ["客户端断开", stats.clientDisconnects, "下游连接提前关闭，例如客户端取消请求。"],
+    ["等不到新数据", stats.idleTimeouts, "在规定时间内没有收到上游数据。"],
+    ["等不到有效进展", stats.progressTimeouts, "在规定时间内没有新内容或其他有效进展。连接即使还在发心跳也会超时。"],
+  ];
+  return (
+    <>
+      <button
+        className="info-hint-button stream-diagnostics-trigger"
+        type="button"
+        aria-label="查看流式诊断"
+        title="流式诊断"
+        popovertarget={panelId}
+      >
+        <Info size={14} aria-hidden="true" />
+      </button>
+      <div className="provider-activity-diagnostics" id={panelId} popover="auto" role="region" aria-labelledby={`${panelId}-title`}>
+        <h3 id={`${panelId}-title`}>流式诊断</h3>
+        <p className="stream-diagnostics-scope">本分组累计 {formatNumber(stats.streamAttempts)} 次流式尝试</p>
+        <dl className="stream-diagnostics-list">
+          {outcomes.map(([label, count]) => (
+            <div key={label}><dt>{label}</dt><dd>{formatNumber(count)} 次</dd></div>
+          ))}
+          <div><dt>平均等到上游首批数据</dt><dd>{firstByteText}</dd></div>
+        </dl>
+        <details className="stream-diagnostics-detail">
+          <summary>原因与统计口径</summary>
+          <dl className="stream-diagnostics-list">
+            {causes.map(([label, count, description]) => (
+              <div key={label}>
+                <dt>{label}<small>{description}</small></dt>
+                <dd>{formatNumber(count)} 次</dd>
+              </div>
+            ))}
+            {lastChunkText && (
+              <div><dt>最近记录到的上游数据</dt><dd><time dateTime={stats.latestLastChunkAt}>{lastChunkText}</time></dd></div>
+            )}
+          </dl>
+          <p>失败项按上游尝试计数。同一请求可能尝试多次，一次失败也可能同时属于多种原因。</p>
+          <p>首批数据平均等待时间来自 {formatNumber(stats.firstByteSamples)} 次有计时的尝试，成功或失败都可计入。最近数据时间也取自两类尝试。</p>
+          <p>回复开始以代理向客户端发出流数据为准。首批数据从发起上游尝试开始计时，其中可能只有协议事件。</p>
+        </details>
+      </div>
+    </>
   );
 }
 
@@ -1467,7 +1603,7 @@ function AuthGate() {
     <main className="cc-app">
       <section className="page-card single">
         <form className="panel add-panel" onSubmit={login}>
-          <h1>CCS Lite</h1>
+          <h1>Lite CC Switch</h1>
           <p>{auth ? "请输入服务端配置的管理令牌。" : "正在连接服务…"}</p>
           {auth && <Field label="管理令牌"><input type="password" value={token} onChange={(event) => setToken(event.target.value)} autoComplete="current-password" required /></Field>}
           {error && <p role="alert">{error}</p>}

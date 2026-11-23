@@ -3,13 +3,15 @@
  * 迁移 ccswitch 原版供应商卡片结构，保留供应商图标、故障转移优先级和 hover 操作区外观。
  */
 import { useEffect, useMemo, useState } from "react";
-import { Activity, CheckCircle2, ChevronDown, ChevronUp, Eye, EyeOff, Loader2, Save, X, XCircle } from "lucide-react";
+import { Activity, CheckCircle2, ChevronDown, ChevronUp, Copy, Eye, EyeOff, Loader2, Save, X, XCircle } from "lucide-react";
 import { OAuthFileSourceFields } from "./OAuthFileSourceFields.jsx";
+import { ProviderCompatibility } from "./ProviderCompatibility.jsx";
 import { ProviderActions } from "./ProviderActions.jsx";
 import { formatMoney, formatNumber, formatTime, stateText } from "./format.js";
 
 export function ProviderCard({
   provider,
+  apiClient,
   isCurrent,
   isAutoFailoverEnabled,
   billingStats,
@@ -23,6 +25,7 @@ export function ProviderCard({
   activeRequests = [],
   onCancelRequest,
 }) {
+  const [showCompatibility, setShowCompatibility] = useState(false);
   const [sortIndex, setSortIndex] = useState(provider.sortIndex || 1);
   const [expanded, setExpanded] = useState(false);
   const [editDraft, setEditDraft] = useState(() => providerToDraft(provider));
@@ -117,6 +120,7 @@ export function ProviderCard({
               onEdit={toggleEditor}
               onDuplicate={() => duplicateProvider(provider)}
               onTest={() => onAction(provider, "test")}
+              onCompatibility={() => setShowCompatibility((value) => !value)}
               onConfigureUsage={onConfigureUsage}
               onOpenPriceLab={onOpenPriceLab}
               onResetCircuit={() => onAction(provider, "reset")}
@@ -126,6 +130,8 @@ export function ProviderCard({
           </div>
         </div>
       </div>
+
+      {showCompatibility && <ProviderCompatibility provider={provider} apiClient={apiClient} onClose={() => setShowCompatibility(false)} />}
 
       {testStatus && (
         <div className={`provider-test-status ${testStatus.state}`}>
@@ -143,6 +149,7 @@ export function ProviderCard({
           <small>
             {testStatus.model ? `模型 ${testStatus.model}` : "模型检测"}
             {testStatus.latencyMs ? ` · ${testStatus.latencyMs}ms` : ""}
+            {testStatus.transport === "json" ? " · 请求 JSON（非流式）" : testStatus.transport === "sse" ? " · 请求 SSE（流式）" : ""}
             {testStatus.status ? ` · 上游 ${testStatus.status}` : ""}
           </small>
           {testStatus.attempts?.length > 1 && (
@@ -150,6 +157,7 @@ export function ProviderCard({
               尝试链路：{testStatus.attempts.map((item) => `${item.model}${item.ok ? "✓" : `(${item.status || "失败"})`}`).join(" -> ")}
             </small>
           )}
+          {testStatus.transport === "json" && testStatus.state !== "pending" && <small className="provider-model-line">非流式 CCOK 仅验证短回复；流式结束、工具调用请用编码兼容性检查。</small>}
           {testStatus.routingMessage && (
             <small className="provider-model-line">路由处理：{testStatus.routingMessage}</small>
           )}
@@ -162,10 +170,15 @@ export function ProviderCard({
           {activeRequests.map((request) => (
             <div className={`provider-live-request${request.stale ? " stale" : ""}`} key={request.id}>
               <div>
-                <strong>
-                  {request.requestId || request.id.slice(0, 8)}
+                <strong className="provider-live-session">
+                  {request.codexSessionId ? <>
+                    <span>Codex 会话 ID</span>
+                    <code title={request.codexSessionId}>{request.codexSessionId}</code>
+                    <CopySessionId key={request.codexSessionId} sessionId={request.codexSessionId} />
+                  </> : <span>未识别 Codex 会话 ID</span>}
                   {request.stale && <em className="provider-live-stale">静默超时</em>}
                 </strong>
+                <small title={request.requestId || request.id}>请求 ID · {request.requestId || request.id}</small>
                 <small>
                   {({ connecting: "连接上游", probing: "等待有效输出", reading: "读取响应", streaming: "流式传输", cancelling: "正在取消" })[request.state] || request.state} · 已运行 {formatDuration(request.ageMs)} · 最近数据 {request.lastChunkAt ? `${formatDuration(request.idleMs)} 前` : "暂无"}
                   {request.firstByteAt ? ` · 上游首包 ${formatTime(request.firstByteAt)}` : ""}
@@ -454,6 +467,22 @@ export function ProviderCard({
     const text = `${source.name}\n${source.baseUrl}\n${source.notes || ""}`;
     navigator.clipboard?.writeText(text).catch(() => {});
   }
+}
+
+function CopySessionId({ sessionId }) {
+  const [feedback, setFeedback] = useState("");
+  if (!navigator.clipboard?.writeText) return null;
+  const label = feedback || "复制 Codex 会话 ID";
+  return <button
+    className="provider-live-copy"
+    type="button"
+    title={label}
+    aria-label={label}
+    onClick={async () => {
+      try { await navigator.clipboard.writeText(sessionId); setFeedback("已复制"); }
+      catch { setFeedback("复制失败，可选中 ID 手动复制"); }
+    }}
+  >{feedback === "已复制" ? <CheckCircle2 size={13} /> : <Copy size={13} />}</button>;
 }
 
 function formatDuration(milliseconds) {

@@ -209,6 +209,7 @@ test("生命周期前导阶段断流时切换供应商并只转发成功供应�
   await proxy.restart();
   const restored = await waitForDiagnostics(proxy);
   assert.deepEqual(restored.group.statistics.streamDiagnostics, group.statistics.streamDiagnostics);
+  t.diagnostic(JSON.stringify({ scenario: "pre_output_failover", simulated: true, primaryAttempts: primaryRequests, fallbackAttempts: fallbackRequests, forwardedFailedBytes: primaryAttempt.streamDiagnostics.forwardedBytes, completed: true }));
 });
 
 test("有效输出已发出后断流不会拼接备用供应商响应", async (t) => {
@@ -251,6 +252,7 @@ test("有效输出已发出后断流不会拼接备用供应商响应", async (t
   assert.equal(group.statistics.totalRequests, 1);
   assert.equal(group.statistics.streamDiagnostics.midStreamDisconnects, 1);
   assert.equal(group.statistics.streamDiagnostics.preOutputFailovers, 0);
+  t.diagnostic(JSON.stringify({ scenario: "post_output_boundary", simulated: true, fallbackAttempts: fallbackRequests, clientStreamFailed: true, responseSpliced: false }));
 });
 
 test("输出后静默超时单独统计且不拼接其他供应商", async (t) => {

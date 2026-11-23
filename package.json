@@ -1,6 +1,6 @@
 {
   "name": "lite-ccswitch-server",
-  "version": "0.2.19",
+  "version": "0.2.21",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,15 +16,12 @@
     "web:build": "node node_modules/vite/bin/vite.js build --config web/vite.config.js",
     "start:handoff": "node handoff-runner.mjs --workspace",
     "check:public": "node scripts/check-public-files.mjs",
-    "test:workspace": "node tests/manual/test-workspace-handoff.mjs"
+    "test:workspace": "node tests/manual/test-workspace-handoff.mjs",
+    "test:reliability": "node --test --test-concurrency=1 tests/unit/test-compatibility-report-format.mjs tests/unit/test-recovery-evidence.mjs tests/unit/test-request-evidence.mjs tests/unit/test-route-diagnostics.mjs tests/integration/test-stream-failover-before-output.mjs tests/integration/test-business-recovery.mjs tests/integration/test-provider-development.mjs tests/integration/test-handoff-session.mjs tests/integration/test-handoff-provider-context.mjs tests/integration/test-handoff-fixed-fallback.mjs tests/integration/test-architecture-reliability.mjs",
+    "drill": "node tests/manual/reliability-drill.mjs",
+    "doctor": "node lib/install-doctor.js"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^4.7.0",
-    "vite": "^6.4.5",
-    "typescript": "^5.6.3",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "lucide-react": "^0.468.0",
     "undici": "^6.29.1"
   },
   "engines": {
@@ -39,5 +36,13 @@
   "bugs": {
     "url": "https://github.com/Red-noblue/ccslite/issues"
   },
-  "homepage": "https://github.com/Red-noblue/ccslite#readme"
+  "homepage": "https://github.com/Red-noblue/ccslite#readme",
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "vite": "^6.4.5",
+    "typescript": "^5.6.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "lucide-react": "^0.468.0"
+  }
 }

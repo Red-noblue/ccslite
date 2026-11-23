@@ -3,9 +3,10 @@
  * 迁移 ccswitch 用量页的 Hero、统计表和请求日志外观，数据改为读取 /api/billing/*。
  */
 import { Activity, ArrowDownToLine, ArrowUpFromLine, ChevronLeft, ChevronRight, Coins, Database, RefreshCw, TrendingUp, Zap } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { formatCompactNumber, formatMoney, formatNumber, formatTime } from "./format.js";
 import { InfoHint } from "./InfoHint.jsx";
+import { RequestDiagnostics } from "./RequestDiagnostics.jsx";
 import { PriceLab } from "./PriceLab.jsx";
 
 export function UsageDashboard({
@@ -19,9 +20,9 @@ export function UsageDashboard({
   onSavePricing,
   onRefresh,
   apiClient,
-  initialSection = "stats",
+  activeSection = "stats",
+  onSectionChange,
 }) {
-  const [activeSection, setActiveSection] = useState(initialSection);
   const [statusFilter, setStatusFilter] = useState("all");
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
@@ -64,7 +65,7 @@ export function UsageDashboard({
     ? rangeSummary.data
     : (!providerFilter?.id && !startAt && !endAt ? billing : null) || emptyUsageSummary();
   const businessBilling = filteredBilling.business || filteredBilling;
-  const ccokBilling = filteredBilling.ccok || emptyUsageSummary();
+  const probeBilling = filteredBilling.probes || filteredBilling.ccok || emptyUsageSummary();
   const usageProviders = businessBilling.providers || [];
   const models = businessBilling.models || [];
   const dayRows = businessBilling.days || [];
@@ -73,16 +74,12 @@ export function UsageDashboard({
     ? providerFilter
     : null;
 
-  useEffect(() => {
-    setActiveSection(initialSection);
-  }, [initialSection]);
-
   return (
     <section className="usage-dashboard">
       <div className="usage-section-tabs" role="tablist" aria-label="计费与价格功能">
-        <button className={activeSection === "stats" ? "active" : ""} type="button" onClick={() => setActiveSection("stats")}>请求统计</button>
-        <button className={activeSection === "experiment" ? "active" : ""} type="button" onClick={() => setActiveSection("experiment")}>价格实验</button>
-        <button className={activeSection === "calibration" ? "active" : ""} type="button" onClick={() => setActiveSection("calibration")}>长期校准</button>
+        <button className={activeSection === "stats" ? "active" : ""} type="button" onClick={() => onSectionChange("stats")}>请求统计</button>
+        <button className={activeSection === "experiment" ? "active" : ""} type="button" onClick={() => onSectionChange("experiment")}>价格实验</button>
+        <button className={activeSection === "calibration" ? "active" : ""} type="button" onClick={() => onSectionChange("calibration")}>长期校准</button>
       </div>
       {activeSection === "stats" ? <>
       <div className="usage-toolbar">
@@ -115,7 +112,7 @@ export function UsageDashboard({
       <UsageHero billing={businessBilling} providerFilter={providerFilter} />
       {summaryError && <p role="alert">统计读取失败：{summaryError}</p>}
 
-      <CcokUsagePanel summary={ccokBilling} />
+      <ProbeUsagePanel summary={probeBilling} />
 
       <UsageTrendChart trend={trend} />
 
@@ -432,16 +429,16 @@ function UsageHero({ billing, providerFilter }) {
   );
 }
 
-// CCOK 探测统计面板：保留真实供应商归属，同时将探测流量与业务流量分开显示。
-function CcokUsagePanel({ summary }) {
+// 探测统计面板：合并 CCOK 和编码检查，保留真实供应商计费归属。
+function ProbeUsagePanel({ summary }) {
   const providers = summary?.providers || [];
   const models = summary?.models || [];
   return (
     <article className="usage-card ccok-usage-card">
       <div className="usage-card-head">
         <div>
-          <h3>CCOK 探测统计 <InfoHint>探测请求仍归属于实际目标供应商；这里单独统计探测产生的请求、Token 和估算成本。</InfoHint></h3>
-          <p>不计入上方业务请求统计。</p>
+          <h3>探测统计 <InfoHint>统计 CCOK 连通性及恢复探测，以及编码兼容性检查。每次上游调用计为一条记录，估算成本归到实际目标供应商。</InfoHint></h3>
+          <p>包含 CCOK 与编码兼容性检查，不计入业务请求统计。</p>
         </div>
         <span className="state-pill neutral">{formatNumber(summary?.totalRequests)} 次</span>
       </div>
@@ -452,14 +449,14 @@ function CcokUsagePanel({ summary }) {
         <TokenMetric icon={<Coins size={15} />} label="估算成本" value={formatMoney(summary?.estimatedCostUsd, 6)} textValue />
       </div>
       <div className="ccok-breakdown-grid">
-        <CcokBreakdownTable title="按供应商" rows={providers} />
-        <CcokBreakdownTable title="按模型" rows={models} />
+        <ProbeBreakdownTable title="按供应商" rows={providers} />
+        <ProbeBreakdownTable title="按模型" rows={models} />
       </div>
     </article>
   );
 }
 
-function CcokBreakdownTable({ title, rows }) {
+function ProbeBreakdownTable({ title, rows }) {
   return (
     <div className="ccok-breakdown">
       <h4>{title}</h4>
@@ -481,7 +478,7 @@ function CcokBreakdownTable({ title, rows }) {
                 <td className="right">{formatNumber(row.totalTokens)}</td>
                 <td className="right">{formatMoney(row.estimatedCostUsd, 6)}</td>
               </tr>
-            )) : <tr><td colSpan="4" className="empty-cell">暂无 CCOK 探测记录</td></tr>}
+            )) : <tr><td colSpan="4" className="empty-cell">暂无探测记录</td></tr>}
           </tbody>
         </table>
       </div>
@@ -611,12 +608,14 @@ function PricingPanel({ pricing, setPricing, onSavePricing }) {
 
 function RequestLogTable({ apiClient, query, refreshToken, statusFilter, setStatusFilter }) {
   const pageSize = 30;
+  const [expandedId, setExpandedId] = useState(null);
   const [page, setPage] = useState(0);
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const snapshot = useRef("");
   const totalPages = data?.totalPages || 1;
   const currentPage = page;
+  useEffect(() => setExpandedId(null), [page, query, statusFilter, refreshToken]);
   const pageLogs = data?.records || [];
   const total = data?.totalRecords || 0;
   useEffect(() => { setPage(0); snapshot.current = ""; }, [refreshToken]);
@@ -681,15 +680,17 @@ function RequestLogTable({ apiClient, query, refreshToken, statusFilter, setStat
               <th className="center">成本</th>
               <th className="center">状态</th>
               <th className="center">请求 ID</th>
+              <th className="center">诊断</th>
             </tr>
           </thead>
           <tbody>
             {pageLogs.length ? pageLogs.map((log) => (
-              <tr key={log.id}>
+              <Fragment key={log.id}><tr className="usage-log-row">
                 <td className="center">{formatTime(log.timestamp)}</td>
                 <td className="center">
                   <span>{log.providerName || "未知"}</span>
                   {isCcokProbeLog(log) && <span className="usage-category-tag">CCOK</span>}
+                  {log.usageCategory === "compatibility_probe" && <span className="usage-category-tag">兼容检查</span>}
                 </td>
                 <td className="center mono">{log.responseModel || log.requestModel || "unknown"}</td>
                 <td className="center mono">{log.billingModel || log.responseModel || log.requestModel || "unknown"}</td>
@@ -705,8 +706,11 @@ function RequestLogTable({ apiClient, query, refreshToken, statusFilter, setStat
                   <span className={`state-pill ${log.error || log.statusCode >= 400 ? "bad" : "ok"}`}>{log.statusCode}</span>
                 </td>
                 <td className="center mono" title={log.requestId || ""}>{shortRequestId(log.requestId)}</td>
+                <td><button type="button" className="cc-button cc-button-secondary cc-button-sm" aria-expanded={expandedId === log.id} onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>详情</button></td>
               </tr>
-            )) : <tr><td colSpan="10" className="empty-cell">暂无数据</td></tr>}
+              {expandedId === log.id && <tr><td colSpan="11"><RequestDiagnostics key={log.id} log={log} apiClient={apiClient} /></td></tr>}
+              </Fragment>
+            )) : <tr><td colSpan="11" className="empty-cell">暂无数据</td></tr>}
           </tbody>
         </table>
       </div>

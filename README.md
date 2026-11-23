@@ -12,12 +12,32 @@ Local AI API gateway for Codex and Claude Code: multi-provider routing, pre-outp
 
 CCS Lite 是可独立运行的本地 API 网关，也可以与 CC Switch 配合：继续用 CC Switch 管理客户端配置，让请求经过 CCS Lite，再由它按运行状态选择上游供应商。
 
+## 0.2.21 正式版
+
+本版整合供应商编码能力检查、请求诊断与证据、管理台通知及导航改进，并修复旧工作进程被新版活动请求阻止退役的问题。完整变更见 [0.2.21 发布说明](docs/releases/0.2.21.md)。
+
+- **编码兼容性检查**：区分普通对话与开发任务能力，检查 SSE、工具调用、工具结果回传和上下文接续；可运行隔离的小型文件与命令任务，查看每轮执行记录、历史报告并导出脱敏结果。无需安装真实 Codex 或 OpenCode 客户端。
+- **请求诊断与恢复证据**：按请求查看候选顺序、实际尝试、排除原因、SSE 故障阶段及关联恢复记录；历史日志未保存的信息明确标注。
+- **逐会话交接可连续升级**：旧版只等待自己的请求、会话和完成检查点排空，再持续空闲至少 5 秒；新版继续处理请求不会阻止旧版退出。新版还须通过连续健康观察。已开始的 SSE 留在原进程完成。
+- **管理台更易核对**：活动请求展示客户端提供的 Codex 对话 ID；流式诊断使用带单位的说明浮层；供应商卡片、优先级保存、删除刷新、通知和侧栏对齐得到修正。
+- **可直接打开的页面链接**：默认分组为 `#providers`，其他分组为 `#providers?group=<分组ID>`；设置、添加供应商、统计与价格实验均更新地址，支持刷新及浏览器前进后退。示例：`#settings`、`#add`、`#billing?section=experiment`。
+- **安装自检与演练**：`npm run doctor` 检查运行环境，`npm run drill` 在模拟供应商和隔离端口上演练故障转移、恢复、逐步升级及固定备份回退。
+
+从较早版本升级时，需要在空闲窗口重启一次前置器以加载新的退役规则；只切换工作进程不会更新前置器。以后前置器协议兼容的工作进程仍可通过 `upgrade-session` 在线交接。探测统计包含 CCOK 和编码检查的上游调用及用量；普通 CCOK 的非流式结果不代表 SSE 或开发任务已通过。
+
+## 项目缘起：较旧 Linux 主机
+
+CCS Lite 的一个设计动机，是为无法安装 CC Switch 桌面端的较旧 Linux 主机提供本地服务入口。采用 JavaScript 和 Node.js，可以在没有桌面环境的 Linux 主机上以普通进程运行网关；Ubuntu 18.04 搭配 Node.js 16 是项目早期希望覆盖的使用场景之一。
+
+这项缘起不等于当前版本已经支持 Node.js 16：本仓库当前代码在 `package.json` 中声明 Node.js `>=18.17`，依赖和运行时也以 Node.js 18 及以上为基础。Ubuntu 18.04 + Node.js 16 不属于当前版本已支持或 CI 已验证的组合。若主机只能运行 Node.js 16，请勿直接按下面的当前版本安装步骤部署；要重新提供这项兼容能力，需要先针对旧版 Node.js 调整依赖与运行时代码，并增加对应平台的自动化测试。
+
 [快速开始](#快速开始) · [界面预览](#界面预览) · [在线升级与回退](#固定监听前置器) · [English overview](#english-overview) · [问题反馈](https://github.com/Red-noblue/ccslite/issues)
 
 ## 适合哪些场景
 
 | 你的需求 | CCS Lite 的处理方式 |
 | --- | --- |
+| Linux 主机无法安装 CC Switch 桌面端 | 可单独运行本地 Node.js 网关；旧发行版是否可用取决于该主机能够运行的 Node.js 版本，当前版本不支持 Node.js 16 |
 | 多个供应商之间需要自动切换 | 按优先级选择上游，失败时重试或回退，确认恢复后再迁回 |
 | 想知道今天用了多少 token | 供应商卡片展示今日业务用量，统计页查看历史、探测用量和费用估算 |
 | 多个对话进行中仍要更新服务 | 固定监听前置器保持入口，各会话在当前请求及检查点完成后逐步交接 |
@@ -39,7 +59,7 @@ flowchart LR
 - 按数字优先级、同优先级的名称顺序选择供应商，支持重试、故障转移、粘滞会话和恢复后回迁。
 - 按分组管理供应商引用和独立监听端口，同一供应商的后台恢复探测按进程共享。
 - 代理 `/v1/responses`、`/v1/chat/completions` 和 `/v1/messages` 等入口；实际可用能力取决于上游。
-- 记录业务与 CCOK 探测用量，供应商卡片显示客户端时区下的今日业务用量，统计页保留完整历史汇总。
+- 记录业务与 CCOK、编码兼容性探测用量，供应商卡片显示客户端时区下的今日业务用量，统计页保留完整历史汇总。
 - 提供价格实验、人民币与美元计价以及汇率系数缓存。
 - 固定监听前置器支持逐会话交接、整体交接和固定版本回退；配置、用量、诊断经前置器协调写入。
 
@@ -70,22 +90,24 @@ CCS Lite 会在开始向客户端提交响应前检查 SSE 首包和事件前导
 
 ## 环境要求
 
-- 最低 Node.js 18.17；推荐 Node.js 22 或 24，以及配套的 npm。
+- 当前代码声明最低 Node.js 18.17；CI 已验证的组合是 Ubuntu + Node.js 22、macOS + Node.js 24。其他 Node.js 版本或操作系统组合尚未由当前 CI 覆盖。
 - macOS 或 Linux；Windows 建议使用 WSL2。前置器本机控制依赖 Unix 套接字，`restart.sh` 还需要 Bash、curl、lsof 和 ps。
 - 使用浏览器访问管理台；供应商地址和认证由用户自行添加，仓库不附带账号或密钥。
+
+Ubuntu 18.04 + Node.js 16 是项目早期的兼容目标，不是当前 `0.2.21` 代码的安装承诺。旧发行版还受系统 C 库与 Node.js 发行包要求影响，不能只依据 Linux 发行版名称判断兼容性。
 
 ## 快速开始
 
 ```bash
 git clone https://github.com/Red-noblue/ccslite.git
 cd ccslite
-npm ci
+npm ci --omit=dev
 npm start
 ```
 
 打开 <http://127.0.0.1:15720>，添加自己的供应商并配置“参与自动路由”和优先级。首次启动会在本仓库的 `data/` 中建立空配置；无需从其他项目复制运行数据。未添加供应商时，管理台可以打开，业务代理尚无可用上游。
 
-仓库包含可直接使用的 `public/` 页面。修改前端后运行 `npm run web:build`；仅安装并启动现有页面时不必重新构建。
+仓库包含可直接使用的 `public/` 页面。运行安装只需 `undici`；修改前端时先运行完整的 `npm ci`，再执行 `npm run web:build`，不需要现场构建页面才能启动。
 
 `npm start` 是直接启动方式，便于首次配置和开发。长期运行及在线交接建议完成下面的前置器准备后使用 `npm run start:handoff`。同一端口只使用一种启动方式。
 
@@ -114,10 +136,10 @@ LITE_CCSWITCH_PORT=15725 npm start
 先按快速开始运行一次 `npm start`，完成本机配置。然后按一次 `Ctrl+C`，等进程排空退出，再执行：
 
 ```bash
-node release.mjs snapshot . ../ccslite-baseline-0.2.19 baseline-0.2.19
-node release.mjs verify ../ccslite-baseline-0.2.19
+node release.mjs snapshot . ../ccslite-baseline-0.2.21 baseline-0.2.21
+node release.mjs verify ../ccslite-baseline-0.2.21
 mkdir -p fallback-releases
-mv ../ccslite-baseline-0.2.19 fallback-releases/
+mv ../ccslite-baseline-0.2.21 fallback-releases/
 npm run start:handoff
 ```
 
@@ -236,6 +258,6 @@ CCS Lite is a self-hosted local AI API gateway and provider manager for Codex, C
 
 Features include priority-based routing, automatic failover, sticky sessions with recovery migration, per-group endpoints, daily token usage, historical billing estimates, and SSE streaming. A fixed-port supervisor supports gradual worker upgrades at request boundaries and a designated fallback release. Retryable SSE failures can switch providers before response output begins. Once output has been sent, the stream cannot be safely continued with another provider, and the client may need to retry. The project does not promise uninterrupted service through every failure.
 
-Use Node.js 22 or 24 on macOS or Linux; WSL2 is recommended on Windows. Start with the four commands in [Quick start](#快速开始). No outer toolkit or portable CLI is required. Provider credentials and runtime data stay outside Git. See the [MIT license](LICENSE) and [issue tracker](https://github.com/Red-noblue/ccslite/issues).
+The project originated as a headless JavaScript gateway for older Linux hosts where a desktop provider manager may not be installable. The current 0.2.21 source requires Node.js 18.17 or newer; Ubuntu 18.04 with Node.js 16 was an early compatibility target, not a currently tested combination. CI currently tests Ubuntu with Node.js 22 and macOS with Node.js 24; WSL2 is recommended on Windows because the handoff control channel uses Unix sockets. Start with the four commands in [Quick start](#快速开始). No outer toolkit or portable CLI is required. Provider credentials and runtime data stay outside Git. See the [MIT license](LICENSE) and [issue tracker](https://github.com/Red-noblue/ccslite/issues).
 
 如果它帮助你减少了供应商切换和服务维护的麻烦，欢迎 Star 或提交使用反馈。报告问题时，请附上版本、脱敏后的复现步骤和相关错误；也欢迎改进文档或提交修复。

@@ -36,7 +36,7 @@ export function ProviderForm({
       {draft.authMode === "client_session" && (
         <p className="auth-mode-hint">客户端会话模式仅用于兼容已有配置，日常 CCT 不建议使用。</p>
       )}
-      <NumberField label="优先级" value={draft.sortIndex} onChange={(value) => update("sortIndex", value)} />
+      <NumberField label="优先级" value={draft.sortIndex} min={1} required onChange={(value) => update("sortIndex", value)} />
       <TextField label="备注" value={draft.notes} onChange={(value) => update("notes", value)} placeholder="额度、来源或说明" />
       <button className="button" type="submit" disabled={saving}>添加到队列</button>
     </form>
@@ -99,10 +99,10 @@ function ApiKeyField({ value, onChange, required = false }) {
 }
 
 // 通用数字输入字段，统一设置页的数值输入行为。
-export function NumberField({ label, value, onChange }) {
+export function NumberField({ label, value, onChange, min, required }) {
   return (
     <Field label={label}>
-      <input type="number" value={value ?? 0} step="1" onChange={(event) => onChange(Number(event.target.value))} />
+      <input type="number" value={value ?? 0} step="1" min={min} required={required} onChange={(event) => onChange(Number(event.target.value))} />
     </Field>
   );
 }

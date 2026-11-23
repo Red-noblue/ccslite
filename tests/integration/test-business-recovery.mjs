@@ -137,6 +137,24 @@ test("业务连续成功回迁旧会话，按组优先级和模型隔离，并�
   assert.ok(usageRecords.some((record) => record.routeReason === "failover"), "故障转移请求应记录原因");
   assert.ok(usageRecords.some((record) => record.routeReason === "recovered_migration"), "恢复迁移请求应记录原因");
   assert.ok(usageRecords.some((record) => record.routeReason === "previous_response_fallback"), "上下文回退请求应记录原因");
+  const events = (await api("/api/routing/recovery-events")).events;
+  const confirmed = events.find((event) => event.kind === "confirmed" && event.providerId === "a" && event.model === "model-a");
+  assert.equal(confirmed.successCount, 2); assert.equal(confirmed.source, "business");
+  assert.ok(events.some((event) => event.kind === "bindings_migrated" && event.providerId === "a" && event.migratedBindings > 0));
+  assert.ok(!events.some((event) => event.groupId === quality.id), "默认组查询不得混入其他分组事件");
+  const migrated = usageRecords.find((record) => record.routeReason === "recovered_migration" && record.requestModel === "model-a");
+  assert.equal(migrated.routeSnapshot.recovery.providerId, "a");
+  const evidence = await api(`/api/billing/logs/${migrated.id}/evidence`);
+  assert.ok(evidence.recoveries.some((event) => event.eventId === confirmed.eventId));
+  assert.ok(evidence.recoveries.some((event) => event.kind === "bindings_migrated"));
+  const countBeforeRead = calls.length;
+  await api(`/api/billing/logs/${migrated.id}/evidence`); assert.equal(calls.length, countBeforeRead);
+  failedModels.add("model-a"); await routed("force-failure", "b");
+  const invalidated = (await api("/api/routing/recovery-events")).events.filter((event) => event.kind === "invalidated" && event.providerId === "a" && event.model === "model-a");
+  assert.equal(invalidated.length, 1, "确认失效只记录状态变化，不为每次失败重复记事件");
+  await routed("another-failure", "b");
+  assert.equal((await api("/api/routing/recovery-events")).events.filter((event) => event.kind === "invalidated" && event.providerId === "a" && event.model === "model-a").length, 1);
+  t.diagnostic(JSON.stringify({ scenario: "recovery_migration", simulated: true, confirmationSuccesses: confirmed.successCount, bindingMigrationRecorded: evidence.recoveries.some((event) => event.kind === "bindings_migrated"), migratedRequestProvider: migrated.providerId, groupAndModelIsolated: true, extraProbes: calls.filter((call) => call.probe).length }));
 });
 
 test("完整响应结束时不把恢复后的高优先级粘滞覆盖回旧供应商", { timeout: 15000 }, async (t) => {

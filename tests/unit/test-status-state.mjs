@@ -18,6 +18,7 @@ test("同一实例中拒绝迟到轮询覆盖更晚的路由状态", () => {
       currentProviderSource: "proxy_attempt",
       providerActivity: { windowMs: 5000, providers: [{ providerId: "cat", activeRequests: 2 }] },
       groups: [{ id: "default", statistics: { totalRequests: 8 } }],
+      providers: [{ id: "cat" }],
     },
     {
       instanceId: "instance-a",
@@ -26,6 +27,7 @@ test("同一实例中拒绝迟到轮询覆盖更晚的路由状态", () => {
       currentProviderName: "aimz-test1",
       providerActivity: { windowMs: 5000, providers: [] },
       groups: [{ id: "default", statistics: { totalRequests: 7 } }],
+      providers: [{ id: "cat" }, { id: "已删除" }],
     },
   );
 
@@ -34,6 +36,7 @@ test("同一实例中拒绝迟到轮询覆盖更晚的路由状态", () => {
   assert.equal(merged.statusRevision, 8);
   assert.equal(merged.providerActivity.providers[0].activeRequests, 2);
   assert.equal(merged.groups[0].statistics.totalRequests, 8);
+  assert.deepEqual(merged.providers, [{ id: "cat" }], "迟到轮询不能恢复已删除供应商");
 });
 
 test("服务重启后接受新实例的低版本状态", () => {

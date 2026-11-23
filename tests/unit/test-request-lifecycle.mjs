@@ -5,7 +5,17 @@
 
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createRequestLifecycleRegistry } from "../../lib/request-lifecycle.js";
+import { createRequestLifecycleRegistry, readCodexSessionId } from "../../lib/request-lifecycle.js";
+
+test("只读取可识别的 Codex 线程或会话标识，不使用请求追踪或缓存 ID", () => {
+  const id = "019b0000-1111-7222-8333-444444444444";
+  const legacyId = "019b0000-2222-7333-8444-555555555555";
+  assert.equal(readCodexSessionId({ originator: "codex_cli_rs", "thread-id": id, "x-codex-session-id": legacyId }), id);
+  assert.equal(readCodexSessionId({ "user-agent": "codex_cli_rs/0.167.2", "thread-id": id }), id);
+  assert.equal(readCodexSessionId({ "x-codex-session-id": legacyId }), legacyId);
+  assert.equal(readCodexSessionId({ "x-request-id": id, "prompt-cache-key": id, "thread-id": id }), null);
+  assert.equal(readCodexSessionId({ originator: "codex_cli_rs", "thread-id": `${id}, ${legacyId}` }), null);
+});
 
 test("登记器记录流式数据时间和字节统计，但不保存请求正文", () => {
   let clock = 1000;

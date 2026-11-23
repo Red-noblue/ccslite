@@ -4,6 +4,7 @@
  */
 import {
   Activity,
+  TestTube2,
   BarChart3,
   Check,
   Copy,
@@ -25,6 +26,7 @@ export function ProviderActions({
   onEdit,
   onDuplicate,
   onTest,
+  onCompatibility,
   onConfigureUsage,
   onOpenPriceLab,
   onResetCircuit,
@@ -70,9 +72,10 @@ export function ProviderActions({
         <button className="cc-icon-action" onClick={onDuplicate} title="复制">
           <Copy size={15} />
         </button>
-        <button className="cc-icon-action" onClick={onTest} disabled={isTesting} title="检测连通并更新路由健康">
+        <button className="cc-icon-action" onClick={onTest} disabled={isTesting} title="CCOK 连通性检测（影响路由健康）">
           {isTesting ? <Loader2 className="spin" size={15} /> : <Activity size={15} />}
         </button>
+        <button className="cc-icon-action" onClick={onCompatibility} title="编码兼容性检查"><TestTube2 size={15} /></button>
         <button className="cc-icon-action" onClick={onConfigureUsage} title="使用统计">
           <BarChart3 size={15} />
         </button>

@@ -57,3 +57,18 @@ test("冷汇总让出事件循环、合并并发查询，并保持请求开始�
   const next = await queries.summaryAsync({ timezoneOffset: -480 });
   assert.equal(next.totalRequests, 20_001); assert.equal(next.today.totalRequests, 0); assert.equal(next.estimatedCostUsd, 60_003);
 });
+
+test("历史和新增兼容检查按探测重新汇总，CCOK 旧分项仍只计自身", () => {
+  const records = [row(0), row(1, { usageCategory: "ccok_probe" }), row(2, { usageCategory: "compatibility_probe" }), row(3, { groupId: "other", usageCategory: "compatibility_probe" })];
+  const normalizer = (record) => normalizeUsageRecord(record, { estimateCost: () => 0.01 });
+  const queries = createUsageQueries({ getRecords: () => records, normalizeUsageRecord: normalizer, now: () => Date.parse("2026-11-09T15:00:00Z") });
+  const summary = queries.summary({ groupId: "default" });
+  assert.equal(summary.business.totalRequests, 1);
+  assert.equal(summary.ccok.totalRequests, 1);
+  assert.equal(summary.probes.totalRequests, 2);
+  assert.equal(summary.probes.estimatedCostUsd, 0.02);
+  assert.equal(summary.probes.totalTokens, 10);
+  assert.equal(summary.today.probes.totalRequests, 2);
+  assert.equal(queries.trend({ groupId: "default" }).sampleCount, 1);
+  assert.equal(queries.logs({ groupId: "default" }).records[0].usageCategory, "compatibility_probe");
+});
